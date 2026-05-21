@@ -1,11 +1,12 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Account, Category, Transaction, Budget } from './schema';
+import type { Account, Category, Transaction, Budget, Holding } from './schema';
 
 class MoneyDB extends Dexie {
   accounts!: EntityTable<Account, 'id'>;
   categories!: EntityTable<Category, 'id'>;
   transactions!: EntityTable<Transaction, 'id'>;
   budgets!: EntityTable<Budget, 'id'>;
+  holdings!: EntityTable<Holding, 'id'>;
 
   constructor() {
     super('moneymind');
@@ -14,6 +15,9 @@ class MoneyDB extends Dexie {
       categories: 'id, name, order',
       transactions: 'id, date, accountId, categoryId, kind, deletedAt, [date+deletedAt]',
       budgets: 'id, month',
+    });
+    this.version(2).stores({
+      holdings: 'id, symbol, market, createdAt, deletedAt',
     });
   }
 }

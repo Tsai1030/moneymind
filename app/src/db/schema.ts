@@ -44,3 +44,20 @@ export interface Budget {
   perCategory: Record<string, number>;
   updatedAt: number;
 }
+
+export type Market = 'TW' | 'US' | 'crypto' | 'other';
+
+export interface Holding {
+  id: string;
+  symbol: string;        // e.g. "2330", "AAPL", "BTC"
+  name: string;          // 顯示名稱
+  market: Market;
+  shares: number;
+  avgCost: number;       // per-share cost in currency
+  currency: 'TWD' | 'USD';
+  currentPrice?: number; // optional manual entry for market value
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt?: number;
+}

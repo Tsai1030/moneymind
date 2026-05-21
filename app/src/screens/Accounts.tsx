@@ -4,6 +4,7 @@ import { db, uid, now } from '../db';
 import type { AccountType } from '../db/schema';
 import { fmtMoney } from '../lib/format';
 import { listRecentTransactions } from '../db/queries';
+import { HoldingsPanel } from './Holdings';
 
 const TYPE_LABEL: Record<AccountType, string> = {
   cash: '現金', bank: '銀行', credit: '信用卡', epay: '電子支付',
@@ -16,18 +17,42 @@ export function Accounts() {
 
   const balances = computeBalances(accounts, recent);
   const [showAdd, setShowAdd] = useState(false);
+  const [section, setSection] = useState<'accounts' | 'holdings'>('accounts');
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <header className="px-6 pt-4 pb-3 flex items-center justify-between">
-        <h1 className="text-[22px] font-extrabold tracking-tight">帳戶</h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="text-[13px] font-semibold px-3 py-1.5 rounded-full"
-          style={{ background: 'var(--bg-subtle)' }}
-        >＋ 新增</button>
+        <h1 className="text-[22px] font-extrabold tracking-tight">資產</h1>
+        {section === 'accounts' && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="text-[13px] font-semibold px-3 py-1.5 rounded-full"
+            style={{ background: 'var(--bg-subtle)' }}
+          >＋ 新增</button>
+        )}
       </header>
 
+      <div className="flex p-1 mx-5 mb-3 rounded-full" style={{ background: 'var(--bg-subtle)' }}>
+        {([
+          { id: 'accounts' as const, label: '帳戶' },
+          { id: 'holdings' as const, label: '投資' },
+        ]).map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setSection(s.id)}
+            className="flex-1 py-2 text-[13px] font-semibold rounded-full transition"
+            style={{
+              background: section === s.id ? 'var(--bg-base)' : 'transparent',
+              color: section === s.id ? 'var(--text-ink)' : 'var(--text-ink-2)',
+              boxShadow: section === s.id ? '0 1px 3px rgba(10,10,10,0.08)' : 'none',
+            }}
+          >{s.label}</button>
+        ))}
+      </div>
+
+      {section === 'holdings' ? (
+        <HoldingsPanel />
+      ) : (
       <div className="flex-1 overflow-y-auto scroll-clean px-5 pb-4">
         {accounts.map((a) => (
           <div key={a.id} className="p-5 mb-3 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
@@ -48,6 +73,7 @@ export function Accounts() {
           </div>
         ))}
       </div>
+      )}
 
       {showAdd && <AddAccountModal onClose={() => setShowAdd(false)} />}
     </div>

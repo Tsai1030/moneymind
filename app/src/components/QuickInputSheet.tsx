@@ -19,6 +19,40 @@ function formatDateLabel(d: string): string {
   return dayjs(d).format('M/D');
 }
 
+// Safe expression evaluator: supports + − × ÷ with standard precedence
+function evaluateExpression(expr: string): number {
+  if (!expr) return 0;
+  let s = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+  // Strip trailing operator (e.g. "200+150+" → "200+150")
+  s = s.replace(/[+\-*/]+$/, '');
+  if (!s) return 0;
+  // Split on + / - keeping signs as separators
+  const terms = s.split(/(?<=\d)([+\-])/);
+  let result = 0;
+  let sign = 1;
+  for (const term of terms) {
+    if (term === '+') { sign = 1; continue; }
+    if (term === '-') { sign = -1; continue; }
+    if (!term) continue;
+    // Handle * and / within term
+    const factors = term.split(/([*/])/);
+    let val = parseFloat(factors[0]) || 0;
+    for (let i = 1; i < factors.length; i += 2) {
+      const op = factors[i];
+      const num = parseFloat(factors[i + 1]) || 0;
+      if (op === '*') val *= num;
+      else if (op === '/') val = num === 0 ? 0 : val / num;
+    }
+    result += sign * val;
+  }
+  return Math.round(result * 100) / 100;
+}
+
+function formatResult(n: number): string {
+  if (Number.isInteger(n)) return String(n);
+  return String(Math.round(n * 100) / 100);
+}
+
 export function QuickInputSheet() {
   const { inputOpen, closeInput, editingTxId } = useUI();
   const editingTx = useLiveQuery(
@@ -33,6 +67,7 @@ export function QuickInputSheet() {
   const [accountId, setAccountId] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [date, setDate] = useState(today());
+  const [expression, setExpression] = useState(''); // e.g. "200+150+"
   const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -51,6 +86,7 @@ export function QuickInputSheet() {
       setKind('expense');
       setNote('');
       setDate(today());
+      setExpression('');
       setShowAccountPicker(false);
       setShowNoteEditor(false);
     }
@@ -93,12 +129,47 @@ export function QuickInputSheet() {
 
   if (!inputOpen) return null;
 
-  const numericAmount = parseFloat(amount) || 0;
+  function finalAmount(): number {
+    if (!expression) return parseFloat(amount) || 0;
+    return evaluateExpression(expression + amount);
+  }
+
+  const numericAmount = finalAmount();
   const canSubmit = numericAmount > 0 && !!categoryId && !!accountId;
 
   function pressKey(k: string) {
     if (k === '⌫') {
-      setAmount((a) => (a.length <= 1 ? '0' : a.slice(0, -1)));
+      if (amount && amount !== '0') {
+        setAmount((a) => (a.length <= 1 ? '0' : a.slice(0, -1)));
+      } else if (expression) {
+        // Pop last operator from expression
+        setExpression((e) => e.slice(0, -1));
+      }
+      return;
+    }
+    if (k === 'C') {
+      setAmount('0');
+      setExpression('');
+      return;
+    }
+    if (k === '=') {
+      if (expression) {
+        const result = evaluateExpression(expression + amount);
+        setAmount(formatResult(result));
+        setExpression('');
+      }
+      return;
+    }
+    if (['+', '−', '×', '÷'].includes(k)) {
+      // Commit current amount + operator into expression
+      if (amount === '0' && expression) {
+        // Replace last operator
+        setExpression((e) => e.slice(0, -1) + k);
+      } else {
+        const current = expression ? evaluateExpression(expression + amount) : parseFloat(amount) || 0;
+        setExpression(formatResult(current) + k);
+        setAmount('0');
+      }
       return;
     }
     if (k === '.') {
@@ -107,9 +178,7 @@ export function QuickInputSheet() {
     }
     setAmount((a) => {
       if (a === '0') return k;
-      // Clamp at 12 chars
       if (a.length >= 12) return a;
-      // Limit decimals to 2 places
       if (a.includes('.') && a.split('.')[1].length >= 2) return a;
       return a + k;
     });
@@ -139,7 +208,13 @@ export function QuickInputSheet() {
     closeInput();
   }
 
-  const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'];
+  // 4-col layout: numbers + operators on right column, = at bottom-right
+  const keys: { label: string; type: 'num' | 'op' | 'eq' | 'del' | 'clear' }[] = [
+    { label: '7', type: 'num' }, { label: '8', type: 'num' }, { label: '9', type: 'num' }, { label: '÷', type: 'op' },
+    { label: '4', type: 'num' }, { label: '5', type: 'num' }, { label: '6', type: 'num' }, { label: '×', type: 'op' },
+    { label: '1', type: 'num' }, { label: '2', type: 'num' }, { label: '3', type: 'num' }, { label: '−', type: 'op' },
+    { label: '.', type: 'num' }, { label: '0', type: 'num' }, { label: '⌫', type: 'del' }, { label: '+', type: 'op' },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center" onClick={closeInput}>
@@ -180,9 +255,19 @@ export function QuickInputSheet() {
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] mb-1.5" style={{ color: 'var(--text-ink-2)' }}>
               NT$
             </div>
+            {expression && (
+              <div className="text-[13px] font-semibold mb-1 num" style={{ color: 'var(--text-ink-3)' }}>
+                {expression.replace(/(\d+)/g, (m) => Number(m).toLocaleString('en-US'))}
+              </div>
+            )}
             <div className="num text-[52px] font-extrabold leading-none">
               {amount === '0' ? '0' : Number(amount.split('.')[0] || 0).toLocaleString('en-US') + (amount.includes('.') ? '.' + (amount.split('.')[1] ?? '') : '')}
             </div>
+            {expression && (
+              <div className="text-[12px] font-semibold mt-1.5 num" style={{ color: 'var(--color-brand-deep)' }}>
+                = {Number(numericAmount).toLocaleString('en-US')}
+              </div>
+            )}
           </div>
 
           {/* Category grid */}
@@ -266,29 +351,50 @@ export function QuickInputSheet() {
             />
           )}
 
-          {/* Keypad */}
-          <div className="grid grid-cols-3 gap-1.5 mb-3">
-            {keys.map((k) => (
-              <button
-                key={k}
-                onClick={() => pressKey(k)}
-                className="h-12 rounded-xl text-[22px] font-semibold num grid place-items-center active:scale-[0.97] transition"
-                style={{ background: k === '⌫' ? 'transparent' : 'var(--bg-subtle)' }}
-              >
-                {k === '⌫' ? <DeleteIcon /> : k}
-              </button>
-            ))}
+          {/* Keypad: 4-col grid with operators on right column */}
+          <div className="grid grid-cols-4 gap-1.5 mb-2">
+            {keys.map((k, i) => {
+              const isOp = k.type === 'op';
+              const isDel = k.type === 'del';
+              return (
+                <button
+                  key={i}
+                  onClick={() => pressKey(k.label)}
+                  className="h-12 rounded-xl text-[22px] font-semibold num grid place-items-center active:scale-[0.97] transition"
+                  style={{
+                    background: isOp
+                      ? 'var(--bg-elevated)'
+                      : isDel
+                        ? 'transparent'
+                        : 'var(--bg-subtle)',
+                    color: isOp ? 'var(--color-brand-deep)' : 'var(--text-ink)',
+                    border: isOp ? `1px solid var(--hairline-2)` : 'none',
+                  }}
+                >
+                  {k.label === '⌫' ? <DeleteIcon /> : k.label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Confirm */}
-          <button
-            onClick={submit}
-            disabled={!canSubmit}
-            className="w-full py-4 rounded-2xl text-[15px] font-bold tracking-wide disabled:opacity-40 active:scale-[0.99] transition"
-            style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
-          >
-            {isEditing ? '儲存變更' : '完成'}
-          </button>
+          {/* Bottom action row: = (only if expression) + Confirm */}
+          <div className="flex gap-1.5">
+            {expression ? (
+              <button
+                onClick={() => pressKey('=')}
+                className="w-1/4 py-4 rounded-2xl text-[18px] font-bold num grid place-items-center"
+                style={{ background: 'var(--bg-elevated)', color: 'var(--color-brand-deep)', border: `1px solid var(--hairline-2)` }}
+              >=</button>
+            ) : null}
+            <button
+              onClick={submit}
+              disabled={!canSubmit}
+              className="flex-1 py-4 rounded-2xl text-[15px] font-bold tracking-wide disabled:opacity-40 active:scale-[0.99] transition"
+              style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
+            >
+              {isEditing ? '儲存變更' : '完成'}
+            </button>
+          </div>
         </div>
       </div>
 

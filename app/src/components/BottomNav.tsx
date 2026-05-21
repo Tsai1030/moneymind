@@ -5,7 +5,7 @@ const tabs = [
   { id: 'home' as const, label: '首頁', Icon: HomeIcon },
   { id: 'analytics' as const, label: '統計', Icon: ChartIcon },
   null,
-  { id: 'accounts' as const, label: '帳戶', Icon: CardIcon },
+  { id: 'accounts' as const, label: '資產', Icon: CardIcon },
   { id: 'me' as const, label: '我的', Icon: UserIcon },
 ];
 
