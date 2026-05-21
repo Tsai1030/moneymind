@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import dayjs from 'dayjs';
 import { db, uid, now } from '../db';
 import type { Holding, Market } from '../db/schema';
 import { fmtMoney } from '../lib/format';
+import { fetchQuote } from '../lib/quote';
 import { BottomSheet } from '../components/BottomSheet';
 
 const MARKET_LABEL: Record<Market, string> = {
@@ -17,17 +19,63 @@ export function HoldingsPanel() {
   }) ?? [];
   const [editing, setEditing] = useState<Holding | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const autoFetchedRef = useRef(false);
 
   const totalCost = holdings.reduce((s, h) => s + h.shares * h.avgCost, 0);
   const totalValue = holdings.reduce((s, h) => s + h.shares * (h.currentPrice ?? h.avgCost), 0);
   const pl = totalValue - totalCost;
   const plPct = totalCost > 0 ? (pl / totalCost) * 100 : 0;
 
+  const oldestUpdate = holdings.length > 0
+    ? Math.min(...holdings.map((h) => h.priceUpdatedAt ?? 0).filter((t) => t > 0))
+    : 0;
+
+  async function refreshPrices(force: boolean) {
+    if (refreshing) return;
+    if (holdings.length === 0) return;
+    setRefreshing(true);
+    const STALE_MS = 5 * 60 * 1000;
+    const tasks = holdings.map(async (h) => {
+      const stale = !h.priceUpdatedAt || Date.now() - h.priceUpdatedAt > STALE_MS;
+      if (!force && !stale) return;
+      const q = await fetchQuote(h.symbol, h.market);
+      if (q && q.price > 0) {
+        await db.holdings.update(h.id, {
+          currentPrice: q.price,
+          priceUpdatedAt: q.fetchedAt,
+          updatedAt: now(),
+        });
+      }
+    });
+    await Promise.all(tasks);
+    setRefreshing(false);
+  }
+
+  // Auto-fetch once when panel mounts and holdings have loaded
+  useEffect(() => {
+    if (holdings.length === 0 || autoFetchedRef.current) return;
+    autoFetchedRef.current = true;
+    void refreshPrices(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdings.length]);
+
   return (
     <>
       {/* Summary card */}
       <div className="mx-5 mb-4 p-5 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-2" style={{ color: 'var(--text-ink-2)' }}>持倉總市值</div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-ink-2)' }}>持倉總市值</div>
+          <button
+            onClick={() => refreshPrices(true)}
+            disabled={refreshing || holdings.length === 0}
+            className="text-[11px] font-semibold px-3 py-1 rounded-full disabled:opacity-40 flex items-center gap-1"
+            style={{ background: 'var(--bg-subtle)', color: 'var(--text-ink-2)' }}
+          >
+            <span className={refreshing ? 'inline-block animate-spin' : ''}>⟳</span>
+            {refreshing ? '更新中' : '更新報價'}
+          </button>
+        </div>
         <div className="num text-[32px] font-extrabold leading-none">
           <span className="text-[14px] font-semibold mr-1" style={{ color: 'var(--text-ink-2)', letterSpacing: 0 }}>NT$</span>
           {fmtMoney(totalValue)}
@@ -40,6 +88,11 @@ export function HoldingsPanel() {
             </span>
           )}
         </div>
+        {oldestUpdate > 0 && (
+          <div className="text-[10px] mt-2 text-right" style={{ color: 'var(--text-ink-3)' }}>
+            報價更新於 {dayjs(oldestUpdate).format('M/D HH:mm')}
+          </div>
+        )}
       </div>
 
       <div className="px-7 mb-2 flex justify-between text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--text-ink-3)' }}>
@@ -182,10 +235,10 @@ function HoldingModal({ open, holding, onClose }: { open: boolean; holding: Hold
 
         <div className="grid grid-cols-2 gap-2">
           <Field label="股數" value={shares} onChange={setShares} placeholder="100" type="number" />
-          <Field label={`平均成本 (${currency})`} value={avgCost} onChange={setAvgCost} placeholder="850" type="number" />
+          <Field label={`成交均價 (${currency})`} value={avgCost} onChange={setAvgCost} placeholder="850" type="number" />
         </div>
 
-        <Field label={`現價 ${currency} (選填)`} value={currentPrice} onChange={setCurrentPrice} placeholder="留空則用成本估算" type="number" />
+        <Field label={`市價 ${currency} (留空自動抓取)`} value={currentPrice} onChange={setCurrentPrice} placeholder="開啟頁面會自動更新" type="number" />
 
         <div className="flex gap-2 pt-2">
           {holding && (

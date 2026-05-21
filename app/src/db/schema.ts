@@ -53,9 +53,10 @@ export interface Holding {
   name: string;          // 顯示名稱
   market: Market;
   shares: number;
-  avgCost: number;       // per-share cost in currency
+  avgCost: number;       // 成交均價 per-share
   currency: 'TWD' | 'USD';
-  currentPrice?: number; // optional manual entry for market value
+  currentPrice?: number; // 市價 (manual or fetched)
+  priceUpdatedAt?: number; // last successful auto-fetch timestamp
   note?: string;
   createdAt: number;
   updatedAt: number;
