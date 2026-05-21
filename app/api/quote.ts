@@ -23,6 +23,50 @@ function buildYahooSymbol(symbol: string, market: Market): string {
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
+// ──────────────────────────────────────────────────────────────
+// Taiwan stock Chinese names (TWSE 上市 + TPEx 上櫃)
+// ──────────────────────────────────────────────────────────────
+const TWSE_LIST_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
+const TPEX_LIST_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_mainboard_quotes';
+
+// Module-level cache (survives across invocations within the same edge isolate).
+let twMapCache: { map: Map<string, string>; expiresAt: number } | null = null;
+const ONE_DAY = 24 * 60 * 60 * 1000;
+
+async function getTWStockNameMap(): Promise<Map<string, string>> {
+  if (twMapCache && twMapCache.expiresAt > Date.now()) return twMapCache.map;
+
+  const fetchJson = async (url: string): Promise<any[]> => {
+    try {
+      const r = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': UA } });
+      if (!r.ok) return [];
+      const j: unknown = await r.json();
+      return Array.isArray(j) ? j : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [tse, tpex] = await Promise.all([fetchJson(TWSE_LIST_URL), fetchJson(TPEX_LIST_URL)]);
+  const map = new Map<string, string>();
+
+  for (const c of tse) {
+    const code = String(c?.Code ?? '').trim();
+    const name = String(c?.Name ?? '').trim();
+    if (code && name) map.set(code, name);
+  }
+  for (const c of tpex) {
+    const code = String(c?.SecuritiesCompanyCode ?? '').trim();
+    const name = String(c?.CompanyName ?? '').trim();
+    if (code && name && !map.has(code)) map.set(code, name);
+  }
+
+  // Cache even an empty map (avoid hammering on failure) but with shorter TTL.
+  const ttl = map.size > 0 ? ONE_DAY : 60_000;
+  twMapCache = { map, expiresAt: Date.now() + ttl };
+  return map;
+}
+
 async function fetchYahooChart(yahooSymbol: string): Promise<{
   price: number | null;
   currency: string | null;
@@ -76,7 +120,6 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    // Try primary symbol first
     let result = await fetchYahoo(buildYahooSymbol(symbol, market));
 
     // For TW, if .TW fails (price null), try .TWO (OTC / 上櫃)
@@ -88,10 +131,19 @@ export default async function handler(req: Request): Promise<Response> {
       return json({ error: 'not_found', symbol }, 404);
     }
 
+    // For TW market, prefer Chinese short name from TWSE/TPEx official lists.
+    let displayName = result.name;
+    if (market === 'TW') {
+      const code = symbol.trim().toUpperCase().replace(/\.(TW|TWO)$/, '');
+      const twMap = await getTWStockNameMap();
+      const chineseName = twMap.get(code);
+      if (chineseName) displayName = chineseName;
+    }
+
     return new Response(
       JSON.stringify({
         symbol: result.resolvedSymbol,
-        name: result.name,
+        name: displayName,
         price: result.price,
         currency: result.currency,
         fetchedAt: Date.now(),
