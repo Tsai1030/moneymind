@@ -21,22 +21,18 @@ function buildYahooSymbol(symbol: string, market: Market): string {
   }
 }
 
-async function fetchYahoo(yahooSymbol: string): Promise<{
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+
+async function fetchYahooChart(yahooSymbol: string): Promise<{
   price: number | null;
   currency: string | null;
   resolvedSymbol: string | null;
 }> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1d&range=1d`;
   const res = await fetch(url, {
-    headers: {
-      // Yahoo blocks requests with no UA or default fetch UA
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-      'Accept': 'application/json',
-    },
+    headers: { 'User-Agent': UA, 'Accept': 'application/json' },
   });
-  if (!res.ok) {
-    return { price: null, currency: null, resolvedSymbol: null };
-  }
+  if (!res.ok) return { price: null, currency: null, resolvedSymbol: null };
   const data: any = await res.json();
   const r = data?.chart?.result?.[0];
   if (!r) return { price: null, currency: null, resolvedSymbol: null };
@@ -45,6 +41,29 @@ async function fetchYahoo(yahooSymbol: string): Promise<{
     currency: r.meta?.currency ?? null,
     resolvedSymbol: r.meta?.symbol ?? null,
   };
+}
+
+async function fetchYahooName(yahooSymbol: string): Promise<string | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(yahooSymbol)}&quotesCount=1&newsCount=0&enableFuzzyQuery=false`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA, 'Accept': 'application/json' },
+    });
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    const q = data?.quotes?.find((x: any) => x?.symbol === yahooSymbol) ?? data?.quotes?.[0];
+    return q?.longname || q?.shortname || null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchYahoo(yahooSymbol: string) {
+  const [chart, name] = await Promise.all([
+    fetchYahooChart(yahooSymbol),
+    fetchYahooName(yahooSymbol),
+  ]);
+  return { ...chart, name };
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -72,6 +91,7 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(
       JSON.stringify({
         symbol: result.resolvedSymbol,
+        name: result.name,
         price: result.price,
         currency: result.currency,
         fetchedAt: Date.now(),

@@ -163,6 +163,8 @@ function HoldingModal({ open, holding, onClose }: { open: boolean; holding: Hold
   const [avgCost, setAvgCost] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
   const [currency, setCurrency] = useState<'TWD' | 'USD'>('TWD');
+  const [nameAutoFilled, setNameAutoFilled] = useState(false);
+  const [lookupStatus, setLookupStatus] = useState<'idle' | 'loading' | 'success' | 'fail'>('idle');
 
   useEffect(() => {
     if (!open) return;
@@ -174,11 +176,45 @@ function HoldingModal({ open, holding, onClose }: { open: boolean; holding: Hold
       setAvgCost(String(holding.avgCost));
       setCurrentPrice(holding.currentPrice ? String(holding.currentPrice) : '');
       setCurrency(holding.currency);
+      setNameAutoFilled(false);
+      setLookupStatus('idle');
     } else {
       setSymbol(''); setName(''); setMarket('TW');
       setShares(''); setAvgCost(''); setCurrentPrice(''); setCurrency('TWD');
+      setNameAutoFilled(false);
+      setLookupStatus('idle');
     }
   }, [open, holding]);
+
+  // Debounced lookup: when symbol or market changes, fetch name+price after 500ms idle
+  useEffect(() => {
+    if (!open) return;
+    const code = symbol.trim();
+    if (code.length < 1) {
+      setLookupStatus('idle');
+      return;
+    }
+    setLookupStatus('loading');
+    const timer = setTimeout(async () => {
+      const q = await fetchQuote(code, market);
+      if (!q) {
+        setLookupStatus('fail');
+        return;
+      }
+      setLookupStatus('success');
+      // Only auto-fill name if empty OR previously auto-filled (don't overwrite user input)
+      if (q.name && (!name.trim() || nameAutoFilled)) {
+        setName(q.name);
+        setNameAutoFilled(true);
+      }
+      // Preview market price if user hasn't manually entered
+      if (q.price > 0 && !currentPrice) {
+        setCurrentPrice(String(q.price));
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol, market, open]);
 
   function handleClose() {
     onClose();
@@ -229,8 +265,29 @@ function HoldingModal({ open, holding, onClose }: { open: boolean; holding: Hold
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <Field label="代號" value={symbol} onChange={setSymbol} placeholder="2330" />
-          <Field label="名稱" value={name} onChange={setName} placeholder="台積電" />
+          <Field
+            label="代號"
+            value={symbol}
+            onChange={(v) => { setSymbol(v); if (nameAutoFilled) { setName(''); setNameAutoFilled(false); } }}
+            placeholder="2330"
+            statusBadge={
+              lookupStatus === 'loading' ? '查詢中…'
+                : lookupStatus === 'success' ? '已帶入 ✓'
+                : lookupStatus === 'fail' ? '找不到'
+                : undefined
+            }
+            statusColor={
+              lookupStatus === 'success' ? 'var(--color-brand-deep)'
+                : lookupStatus === 'fail' ? 'var(--color-danger)'
+                : 'var(--text-ink-3)'
+            }
+          />
+          <Field
+            label="名稱"
+            value={name}
+            onChange={(v) => { setName(v); setNameAutoFilled(false); }}
+            placeholder="輸入代號自動帶入"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -260,12 +317,23 @@ function HoldingModal({ open, holding, onClose }: { open: boolean; holding: Hold
   );
 }
 
-function Field({ label, value, onChange, placeholder, type = 'text' }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+function Field({ label, value, onChange, placeholder, type = 'text', statusBadge, statusColor }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  statusBadge?: string;
+  statusColor?: string;
 }) {
   return (
     <div>
-      <label className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-1 block" style={{ color: 'var(--text-ink-2)' }}>{label}</label>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-ink-2)' }}>{label}</label>
+        {statusBadge && (
+          <span className="text-[10px] font-semibold" style={{ color: statusColor ?? 'var(--text-ink-3)' }}>{statusBadge}</span>
+        )}
+      </div>
       <input
         type={type}
         inputMode={type === 'number' ? 'decimal' : 'text'}

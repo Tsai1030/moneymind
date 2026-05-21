@@ -2,6 +2,7 @@ import type { Market } from '../db/schema';
 
 export interface QuoteResult {
   symbol: string | null;
+  name: string | null;
   price: number;
   currency: string | null;
   fetchedAt: number;
@@ -16,6 +17,7 @@ export async function fetchQuote(symbol: string, market: Market): Promise<QuoteR
     if (typeof data?.price !== 'number') return null;
     return {
       symbol: data.symbol ?? null,
+      name: data.name ?? null,
       price: data.price,
       currency: data.currency ?? null,
       fetchedAt: data.fetchedAt ?? Date.now(),
