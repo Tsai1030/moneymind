@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Noto Sans TC", system-ui, sans-serif;
+
+  --color-canvas: #E8E6E0;
+  --color-canvas-dim: #0E0D0B;
+
+  --color-ink: var(--text-ink);
+  --color-ink-2: var(--text-ink-2);
+  --color-ink-3: var(--text-ink-3);
+
+  --color-base: var(--bg-base);
+  --color-elevated: var(--bg-elevated);
+  --color-subtle: var(--bg-subtle);
+
+  --color-brand: #10B981;
+  --color-brand-deep: #047857;
+  --color-brand-soft: #D1FAE5;
+
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-deep: var(--warning-deep);
+  --color-tip-text: var(--tip-text);
+  --color-danger: #DC2626;
+
+  --color-cat-1: var(--cat-1);
+  --color-cat-2: var(--cat-2);
+  --color-cat-3: var(--cat-3);
+  --color-cat-4: var(--cat-4);
+  --color-cat-5: var(--cat-5);
+
+  --color-hairline: var(--hairline);
+  --color-hairline-2: var(--hairline-2);
+
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+}
+
+:root {
+  color-scheme: light;
+  --bg-base: #FFFFFF;
+  --bg-elevated: #FAF9F6;
+  --bg-subtle: #F2F1ED;
+  --text-ink: #0A0A0A;
+  --text-ink-2: #4B5563;
+  --text-ink-3: #9CA3AF;
+  --tip-text: #1F1B0E;
+  --warning-soft: #FCEFC7;
+  --warning-deep: #7C5108;
+  --hairline: rgba(10, 10, 10, 0.06);
+  --hairline-2: rgba(10, 10, 10, 0.10);
+  --cat-1: #0A0A0A;
+  --cat-2: #374151;
+  --cat-3: #6B7280;
+  --cat-4: #9CA3AF;
+  --cat-5: #D1D5DB;
+  --accent: #0A0A0A;
+  --accent-fg: #FFFFFF;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-base: #111111;
+  --bg-elevated: #1A1A18;
+  --bg-subtle: #26241F;
+  --text-ink: #F5F5F4;
+  --text-ink-2: #B4B0A8;
+  --text-ink-3: #74726B;
+  --tip-text: #FDE68A;
+  --warning-soft: #3A2E0F;
+  --warning-deep: #FBBF24;
+  --hairline: rgba(255, 255, 255, 0.06);
+  --hairline-2: rgba(255, 255, 255, 0.12);
+  --cat-1: #F5F5F4;
+  --cat-2: #B4B0A8;
+  --cat-3: #74726B;
+  --cat-4: #52514C;
+  --cat-5: #3A3935;
+  --accent: #F5F5F4;
+  --accent-fg: #0A0A0A;
+}
+
+/* Native picker indicator (calendar/dropdown arrow) — recolor for dark mode */
+html[data-theme="dark"] ::-webkit-calendar-picker-indicator {
+  filter: invert(0.9);
+}
+
+/* Custom select / native control consistency */
+input, select, textarea {
+  font-family: inherit;
+  color: var(--text-ink);
+  background: var(--bg-subtle);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  outline: none;
+  padding: 10px 12px;
+  transition: border-color 0.15s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+input[type="number"], input[type="text"], input[type="date"], input[type="month"] {
+  color-scheme: inherit;
+}
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+}
+
+html, body, #root { height: 100%; margin: 0; }
+#root { display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; background: var(--bg-base); min-height: 100dvh; position: relative; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--text-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+button { font-family: inherit; cursor: pointer; }
+
+.num {
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.02em;
+}
+
+.scroll-clean::-webkit-scrollbar { display: none; }
+.scroll-clean { scrollbar-width: none; }

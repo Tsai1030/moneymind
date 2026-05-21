@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoneyMind — 主畫面設計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#E8E6E0;
+  --canvas-dim:#0E0D0B;
+  --bg-base:#FFFFFF;
+  --bg-elevated:#FAF9F6;
+  --bg-subtle:#F2F1ED;
+  --ink:#0A0A0A;
+  --ink-2:#4B5563;
+  --ink-3:#9CA3AF;
+  --brand:#10B981;
+  --brand-deep:#047857;
+  --brand-soft:#D1FAE5;
+  --warning-soft:#FCEFC7;
+  --warning-deep:#7C5108;
+  --tip-text:#1F1B0E;
+  --danger:#DC2626;
+  --hairline:rgba(10,10,10,0.06);
+  --hairline-2:rgba(10,10,10,0.10);
+  --font-sans:'Plus Jakarta Sans','Noto Sans TC',system-ui,sans-serif;
+
+  --cat-1:#0A0A0A; --cat-2:#374151; --cat-3:#6B7280; --cat-4:#9CA3AF; --cat-5:#D1D5DB;
+
+  --accent:var(--ink);
+  --accent-fg:#FFFFFF;
+}
+body[data-accent="green"]{ --accent:#047857; --accent-fg:#FFFFFF; }
+body[data-accent="blue"]{ --accent:#1E3A8A; --accent-fg:#FFFFFF; }
+
+/* === Dark mode: swap tokens INSIDE the phone === */
+body.dim .phone{
+  --bg-base:#111111;
+  --bg-elevated:#1A1A18;
+  --bg-subtle:#26241F;
+  --ink:#F5F5F4;
+  --ink-2:#B4B0A8;
+  --ink-3:#74726B;
+  --brand:#34D399;
+  --brand-deep:#6EE7B7;
+  --brand-soft:#064E3B;
+  --warning-soft:#3A2E0F;
+  --warning-deep:#FBBF24;
+  --tip-text:#FDE68A;
+  --hairline:rgba(255,255,255,0.06);
+  --hairline-2:rgba(255,255,255,0.12);
+  --cat-1:#F5F5F4; --cat-2:#B4B0A8; --cat-3:#74726B; --cat-4:#52514C; --cat-5:#3A3935;
+  --accent:#F5F5F4; --accent-fg:#0A0A0A;
+}
+body.dim[data-accent="green"] .phone{ --accent:#34D399; --accent-fg:#052E16; }
+body.dim[data-accent="blue"] .phone{ --accent:#60A5FA; --accent-fg:#0A0E27; }
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{font-family:var(--font-sans);color:var(--ink);background:var(--canvas);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+
+.num{font-feature-settings:"tnum" 1,"lnum" 1;letter-spacing:-0.02em;}
+
+body{
+  min-height:100vh;
+  padding:64px 32px 120px;
+  background-image:radial-gradient(rgba(10,10,10,0.05) 1px,transparent 1px);
+  background-size:24px 24px;
+  transition:background-color .3s ease;
+}
+body.dim{background-color:var(--canvas-dim);background-image:radial-gradient(rgba(255,255,255,0.05) 1px,transparent 1px);color:#F5F5F4;}
+
+/* ============ Page chrome ============ */
+.page-header{
+  max-width:1380px;
+  margin:0 auto 56px;
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:24px;
+  flex-wrap:wrap;
+}
+.brand-line{display:flex;align-items:center;gap:14px;font-weight:800;font-size:18px;}
+.brand-mark{
+  width:36px;height:36px;background:var(--ink);color:#fff;border-radius:11px;
+  display:grid;place-items:center;font-size:15px;font-weight:800;letter-spacing:-0.02em;
+}
+body.dim .brand-mark{background:#fff;color:#0A0A0A;}
+.title-meta{font-size:12px;text-transform:uppercase;letter-spacing:0.18em;font-weight:600;color:var(--ink-2);}
+body.dim .title-meta{color:#D1D5DB;}
+
+.frame-row{
+  display:flex;gap:64px;
+  justify-content:center;align-items:start;
+  max-width:1380px;margin:0 auto;
+  flex-wrap:wrap;
+}
+
+.phone-wrap{display:flex;flex-direction:column;gap:24px;align-items:center;}
+.phone-label{
+  display:flex;align-items:center;gap:14px;
+  font-size:11px;text-transform:uppercase;letter-spacing:0.18em;
+  color:var(--ink-2);font-weight:700;
+}
+body.dim .phone-label{color:#D1D5DB;}
+.phone-label::before{content:"";width:32px;height:1px;background:currentColor;opacity:0.4;}
+.phone-label small{font-weight:500;opacity:0.7;letter-spacing:0.12em;}
+
+/* ============ Phone frame ============ */
+.phone{
+  width:393px;height:852px;
+  background:#000;border-radius:56px;padding:12px;
+  box-shadow:
+    0 60px 120px -40px rgba(15,15,15,0.30),
+    0 24px 48px -12px rgba(15,15,15,0.18),
+    inset 0 0 0 1px rgba(255,255,255,0.04);
+  position:relative;
+}
+.screen{
+  width:100%;height:100%;
+  background:var(--bg-base);
+  color:var(--ink);
+  border-radius:44px;
+  overflow:hidden;
+  position:relative;
+  display:flex;flex-direction:column;
+}
+.dynamic-island{
+  position:absolute;top:23px;left:50%;transform:translateX(-50%);
+  width:108px;height:32px;background:#000;border-radius:20px;z-index:30;
+}
+.status-bar{
+  height:54px;padding:18px 32px 0;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:14px;font-weight:600;flex-shrink:0;
+}
+.status-icons{display:flex;gap:6px;align-items:center;opacity:0.85;}
+.status-icons svg{width:16px;height:11px;}
+
+/* App-level header (in screen) */
+.app-header{
+  padding:18px 24px 12px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.month-pill{
+  display:flex;align-items:center;gap:8px;
+  font-weight:700;font-size:18px;
+  padding:6px 10px 6px 14px;border-radius:999px;
+  background:var(--bg-subtle);
+}
+.month-pill .chev{width:8px;height:8px;border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);transform:rotate(45deg) translateY(-2px);}
+.icon-btn{
+  width:38px;height:38px;background:var(--bg-subtle);border-radius:12px;
+  display:grid;place-items:center;color:var(--ink);
+}
+.icon-btn svg{width:18px;height:18px;}
+
+/* ============ DASHBOARD ============ */
+.budget-card{
+  margin:8px 20px 18px;padding:24px;
+  background:var(--bg-elevated);
+  border:1px solid var(--hairline);
+  border-radius:24px;
+}
+.budget-label{
+  font-size:12px;color:var(--ink-2);font-weight:600;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+  text-transform:uppercase;letter-spacing:0.1em;
+}
+.budget-label::before{content:"";width:4px;height:4px;background:var(--accent);border-radius:50%;}
+.budget-amount{
+  font-size:52px;font-weight:800;letter-spacing:-0.04em;line-height:1;
+  display:flex;align-items:baseline;gap:8px;
+}
+.budget-amount .currency{
+  font-size:18px;font-weight:600;color:var(--ink-2);letter-spacing:0;
+}
+.progress-track{
+  margin-top:22px;height:4px;background:rgba(10,10,10,0.06);
+  border-radius:4px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:var(--accent);border-radius:4px;
+  width:62%;position:relative;
+}
+.progress-fill::after{
+  content:"";position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:8px;height:8px;background:var(--accent);border-radius:50%;
+  border:2px solid var(--bg-elevated);
+}
+.progress-meta{
+  display:flex;justify-content:space-between;margin-top:12px;
+  font-size:12px;color:var(--ink-2);
+}
+.progress-meta b{color:var(--ink);font-weight:700;}
+
+.stats-grid{
+  margin:0 20px 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.stat-card{
+  padding:16px 18px;background:var(--bg-elevated);
+  border:1px solid var(--hairline);border-radius:18px;
+}
+.stat-label{
+  font-size:11px;color:var(--ink-2);margin-bottom:6px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.08em;
+}
+.stat-value{font-size:20px;font-weight:700;letter-spacing:-0.02em;display:flex;align-items:baseline;gap:3px;}
+.stat-value small{font-size:11px;font-weight:600;color:var(--ink-2);letter-spacing:0;}
+.stat-delta{font-size:11px;color:var(--ink-2);margin-top:4px;}
+.stat-delta.up{color:var(--brand-deep);}
+
+.section-title{
+  padding:14px 28px 8px;font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.16em;color:var(--ink-3);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.section-title .view-all{color:var(--ink-2);letter-spacing:0.1em;}
+
+.tx-list{padding:0 12px;overflow-y:auto;flex:1;}
+.tx-row{
+  display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;
+}
+.tx-icon{
+  width:40px;height:40px;background:var(--bg-subtle);border-radius:12px;
+  display:grid;place-items:center;font-size:19px;flex-shrink:0;
+}
+.tx-meta{flex:1;min-width:0;}
+.tx-title{font-size:15px;font-weight:600;letter-spacing:-0.01em;}
+.tx-sub{font-size:12px;color:var(--ink-2);margin-top:2px;}
+.tx-amount{font-size:15px;font-weight:700;letter-spacing:-0.01em;}
+.tx-amount.income{color:var(--brand-deep);}
+
+.bottom-bar{
+  height:84px;border-top:1px solid var(--hairline);background:var(--bg-base);
+  padding:12px 32px 28px;display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;position:relative;
+}
+.tab{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  color:var(--ink-3);font-size:10px;font-weight:600;letter-spacing:0.05em;
+  width:48px;
+}
+.tab svg{width:20px;height:20px;}
+.tab.active{color:var(--ink);}
+.fab{
+  position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+  width:56px;height:56px;background:var(--accent);color:var(--accent-fg);
+  border-radius:50%;display:grid;place-items:center;
+  font-size:28px;font-weight:300;line-height:1;
+  box-shadow:0 12px 24px -6px rgba(0,0,0,0.50),0 0 0 4px var(--bg-base);
+}
+
+/* ============ ANALYTICS ============ */
+.period-row{
+  display:flex;gap:6px;padding:4px 20px 18px;align-items:center;
+}
+.chip{
+  padding:8px 14px;font-size:13px;font-weight:600;color:var(--ink-2);
+  border-radius:999px;border:1px solid transparent;
+}
+.chip.active{background:var(--accent);color:var(--accent-fg);}
+
+.tip-card{
+  margin:0 20px 18px;padding:14px 16px;background:var(--warning-soft);
+  border-radius:18px;display:flex;gap:12px;align-items:flex-start;
+}
+.tip-icon{
+  width:32px;height:32px;background:var(--bg-base);border-radius:10px;
+  display:grid;place-items:center;font-size:16px;flex-shrink:0;
+}
+.tip-body{flex:1;}
+.tip-label{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;
+  color:var(--warning-deep);margin-bottom:4px;
+}
+.tip-text{font-size:13px;line-height:1.5;color:var(--tip-text);font-weight:500;}
+.tip-text b{font-weight:700;}
+
+.donut-wrap{
+  display:flex;justify-content:center;align-items:center;
+  position:relative;margin:8px 0 12px;height:200px;
+}
+.donut{width:200px;height:200px;position:relative;}
+.donut svg{transform:rotate(-90deg);}
+.donut .seg-1{stroke:var(--cat-1);}
+.donut .seg-2{stroke:var(--cat-2);}
+.donut .seg-3{stroke:var(--cat-3);}
+.donut .seg-4{stroke:var(--cat-4);}
+.donut .seg-5{stroke:var(--cat-5);}
+.cat-row .cat-dot.dot-1{background:var(--cat-1);}
+.cat-row .cat-dot.dot-2{background:var(--cat-2);}
+.cat-row .cat-dot.dot-3{background:var(--cat-3);}
+.cat-row .cat-dot.dot-4{background:var(--cat-4);}
+.cat-row .cat-dot.dot-5{background:var(--cat-5);}
+.donut-center{
+  position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+}
+.donut-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:0.16em;
+  color:var(--ink-2);margin-bottom:4px;font-weight:600;
+}
+.donut-value{font-size:24px;font-weight:800;letter-spacing:-0.03em;}
+.donut-value small{font-size:11px;font-weight:600;color:var(--ink-2);margin-right:2px;letter-spacing:0;}
+.donut-sub{font-size:10px;color:var(--ink-3);margin-top:6px;letter-spacing:0.04em;}
+
+.cat-list{padding:8px 24px 0;flex:1;overflow-y:auto;}
+.cat-row{
+  display:flex;align-items:center;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--hairline);
+}
+.cat-row:last-child{border-bottom:none;}
+.cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cat-name{flex:1;font-size:14px;font-weight:600;}
+.cat-amount{font-size:14px;font-weight:700;letter-spacing:-0.01em;}
+.cat-pct{
+  font-size:11px;color:var(--ink-2);font-weight:600;
+  width:34px;text-align:right;letter-spacing:0;
+}
+
+/* ============ INPUT (Sheet) ============ */
+.input-screen{background:#000;}
+.input-backdrop{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(10,10,10,0.55) 0%,rgba(10,10,10,0.72) 100%);
+  z-index:1;
+}
+.input-backdrop .island{
+  position:absolute;top:23px;left:50%;transform:translateX(-50%);
+  width:108px;height:32px;background:#000;border-radius:20px;
+}
+.input-backdrop .status-time{
+  position:absolute;top:18px;left:32px;color:#fff;font-size:14px;font-weight:600;
+}
+.input-backdrop .status-icons{
+  position:absolute;top:21px;right:32px;color:#fff;
+}
+.input-backdrop .ghost-text{
+  position:absolute;top:100px;left:0;right:0;text-align:center;
+  color:rgba(255,255,255,0.55);font-size:12px;font-weight:500;
+  letter-spacing:0.1em;text-transform:uppercase;
+}
+.sheet{
+  position:absolute;bottom:0;left:0;right:0;z-index:2;
+  background:var(--bg-base);
+  border-top-left-radius:28px;border-top-right-radius:28px;
+  padding:10px 20px 30px;height:704px;
+  display:flex;flex-direction:column;
+}
+.drag-handle{
+  width:38px;height:4px;background:rgba(10,10,10,0.18);
+  border-radius:2px;margin:0 auto 14px;
+}
+
+.input-toggle{
+  display:flex;background:var(--bg-subtle);border-radius:12px;padding:3px;
+  margin-bottom:18px;
+}
+.input-toggle button{
+  flex:1;padding:9px;font-size:13px;font-weight:600;
+  border-radius:9px;color:var(--ink-2);
+}
+.input-toggle button.active{
+  background:var(--bg-base);color:var(--ink);
+  box-shadow:0 1px 3px rgba(10,10,10,0.08);
+}
+
+.amount-display{text-align:center;margin:6px 0 18px;}
+.amount-currency{
+  font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px;
+  text-transform:uppercase;letter-spacing:0.16em;
+}
+.amount-value{
+  font-size:56px;font-weight:800;letter-spacing:-0.04em;line-height:1;
+  display:inline-flex;align-items:center;
+}
+.amount-cursor{
+  display:inline-block;width:3px;height:44px;background:var(--brand);
+  margin-left:4px;border-radius:2px;animation:blink 1.1s infinite;
+}
+@keyframes blink{50%{opacity:0;}}
+
+.cat-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;
+}
+.cat-btn{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:11px 4px;border-radius:14px;background:var(--bg-subtle);
+  border:1.5px solid transparent;
+}
+.cat-btn.selected{background:var(--brand-soft);border-color:var(--brand);}
+.cat-btn-icon{font-size:22px;line-height:1;}
+.cat-btn-name{font-size:11px;font-weight:600;color:var(--ink-2);}
+.cat-btn.selected .cat-btn-name{color:var(--brand-deep);}
+
+.meta-row{display:flex;gap:8px;margin-bottom:14px;}
+.meta-btn{
+  flex:1;padding:10px;background:var(--bg-subtle);border-radius:12px;
+  font-size:12px;font-weight:600;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.meta-btn svg{width:14px;height:14px;opacity:0.6;}
+
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;}
+.key{
+  height:48px;border-radius:12px;background:var(--bg-subtle);
+  font-size:22px;font-weight:600;display:grid;place-items:center;
+  letter-spacing:-0.02em;
+}
+.key:active{background:var(--hairline-2);}
+.key.del{background:transparent;font-size:20px;}
+
+.confirm-btn{
+  width:100%;padding:15px;background:var(--accent);color:var(--accent-fg);
+  border-radius:14px;font-size:15px;font-weight:700;letter-spacing:0.02em;
+  margin-top:auto;
+}
+
+/* ============ Tweaks panel ============ */
+.tweaks{
+  position:fixed;bottom:24px;right:24px;background:#fff;
+  border-radius:16px;padding:8px;display:flex;gap:6px;align-items:center;
+  box-shadow:0 16px 40px -10px rgba(0,0,0,0.20),0 0 0 1px rgba(0,0,0,0.06);
+  z-index:100;
+}
+.tweaks-label{
+  padding:0 8px;font-size:11px;font-weight:700;color:var(--ink-2);
+  text-transform:uppercase;letter-spacing:0.14em;
+}
+.tweaks-btn{
+  padding:7px 13px;border-radius:10px;background:var(--bg-subtle);
+  font-size:12px;font-weight:600;color:var(--ink);
+}
+.tweaks-btn.active{background:var(--ink);color:#fff;}
+.tweaks-divider{width:1px;height:18px;background:var(--hairline-2);margin:0 4px;}
+
+@media (max-width:1340px){
+  body{padding:48px 16px 100px;}
+  .frame-row{flex-direction:column;align-items:center;gap:48px;}
+  .tweaks{bottom:16px;right:16px;}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="brand-line">
+    <div class="brand-mark">M</div>
+    <div>MoneyMind</div>
+  </div>
+  <div class="title-meta">主畫面設計 · v0.1 · 2026.05</div>
+</header>
+
+<div class="frame-row">
+
+<!-- ============================================================ -->
+<!-- PHONE 1: DASHBOARD                                            -->
+<!-- ============================================================ -->
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="screen">
+      <div class="dynamic-island"></div>
+      <div class="status-bar">
+        <span class="num">9:41</span>
+        <span class="status-icons">
+          <svg viewBox="0 0 18 12" fill="currentColor"><path d="M1 11h2V8H1v3zm4 0h2V6H5v5zm4 0h2V3H9v8zm4 0h2V0h-2v11z"/></svg>
+          <svg viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 5a8 8 0 0112 0M5 7.5a4 4 0 016 0M8 10v.5"/></svg>
+          <svg viewBox="0 0 24 12" fill="none"><rect x="1" y="2" width="20" height="8" rx="2" stroke="currentColor" stroke-width="1"/><rect x="2.5" y="3.5" width="14" height="5" rx="1" fill="currentColor"/><rect x="22" y="4" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
+        </span>
+      </div>
+
+      <div class="app-header">
+        <div class="month-pill">五月<span class="chev"></span></div>
+        <div class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </div>
+      </div>
+
+      <div class="budget-card">
+        <div class="budget-label">本月剩餘可用</div>
+        <div class="budget-amount num"><span class="currency">NT$</span>12,450</div>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <div class="progress-meta">
+          <span>已使用 <b class="num">20,350</b></span>
+          <span>預算 <b class="num">32,800</b></span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">淨資產</div>
+          <div class="stat-value num"><small>NT$</small>184,200</div>
+          <div class="stat-delta up">↑ 3.2% 本月</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">今日支出</div>
+          <div class="stat-value num"><small>NT$</small>380</div>
+          <div class="stat-delta">3 筆交易</div>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <span>今日 · 5/21</span>
+        <span class="view-all">查看全部</span>
+      </div>
+      <div class="tx-list">
+        <div class="tx-row">
+          <div class="tx-icon">🍱</div>
+          <div class="tx-meta"><div class="tx-title">午餐 · 星巴克</div><div class="tx-sub">餐飲 · 玉山卡</div></div>
+          <div class="tx-amount num">−120</div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon">🚇</div>
+          <div class="tx-meta"><div class="tx-title">捷運</div><div class="tx-sub">交通 · 悠遊卡</div></div>
+          <div class="tx-amount num">−50</div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon">☕</div>
+          <div class="tx-meta"><div class="tx-title">下午茶 · Louisa</div><div class="tx-sub">餐飲 · 現金</div></div>
+          <div class="tx-amount num">−210</div>
+        </div>
+
+        <div class="section-title" style="padding-left:0;padding-right:0;">
+          <span>昨日 · 5/20</span>
+        </div>
+
+        <div class="tx-row">
+          <div class="tx-icon">🛒</div>
+          <div class="tx-meta"><div class="tx-title">全聯週末採購</div><div class="tx-sub">生活 · 玉山卡</div></div>
+          <div class="tx-amount num">−640</div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon">💸</div>
+          <div class="tx-meta"><div class="tx-title">五月薪資</div><div class="tx-sub">收入 · 國泰</div></div>
+          <div class="tx-amount num income">+58,000</div>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="tab active">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2v9h-5v-6h-4v6H5v-9H3l9-8z"/></svg>
+          <div>首頁</div>
+        </div>
+        <div class="tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+          <div>統計</div>
+        </div>
+        <div style="width:56px"></div>
+        <div class="tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>
+          <div>帳戶</div>
+        </div>
+        <div class="tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          <div>我的</div>
+        </div>
+        <button class="fab" aria-label="新增記帳">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">01 · DASHBOARD <small>首頁</small></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHONE 2: ANALYTICS                                            -->
+<!-- ============================================================ -->
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="screen">
+      <div class="dynamic-island"></div>
+      <div class="status-bar">
+        <span class="num">9:41</span>
+        <span class="status-icons">
+          <svg viewBox="0 0 18 12" fill="currentColor"><path d="M1 11h2V8H1v3zm4 0h2V6H5v5zm4 0h2V3H9v8zm4 0h2V0h-2v11z"/></svg>
+          <svg viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 5a8 8 0 0112 0M5 7.5a4 4 0 016 0M8 10v.5"/></svg>
+          <svg viewBox="0 0 24 12" fill="none"><rect x="1" y="2" width="20" height="8" rx="2" stroke="currentColor" stroke-width="1"/><rect x="2.5" y="3.5" width="14" height="5" rx="1" fill="currentColor"/><rect x="22" y="4" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
+        </span>
+      </div>
+
+      <div class="app-header">
+        <div style="font-weight:800;font-size:22px;letter-spacing:-0.02em;">統計分析</div>
+        <div class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        </div>
+      </div>
+
+      <div class="period-row">
+        <button class="chip">本週</button>
+        <button class="chip active">本月</button>
+        <button class="chip">本季</button>
+        <button class="chip">本年</button>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-icon">💡</div>
+        <div class="tip-body">
+          <div class="tip-label">痛點發現</div>
+          <div class="tip-text">本週你在<b>外送平台</b>花了 <b class="num">NT$ 1,200</b>，比上週多了 <b class="num">25%</b>。</div>
+        </div>
+      </div>
+
+      <div class="donut-wrap">
+        <div class="donut">
+          <svg width="200" height="200" viewBox="0 0 200 200">
+            <!-- circumference = 502.65; 餐飲42% 交通19% 娛樂14% 生活13% 其他12% -->
+            <circle class="seg-1" cx="100" cy="100" r="80" fill="none" stroke-width="22" stroke-dasharray="211 503" stroke-dashoffset="0"/>
+            <circle class="seg-2" cx="100" cy="100" r="80" fill="none" stroke-width="22" stroke-dasharray="95 503" stroke-dashoffset="-211"/>
+            <circle class="seg-3" cx="100" cy="100" r="80" fill="none" stroke-width="22" stroke-dasharray="70 503" stroke-dashoffset="-306"/>
+            <circle class="seg-4" cx="100" cy="100" r="80" fill="none" stroke-width="22" stroke-dasharray="65 503" stroke-dashoffset="-376"/>
+            <circle class="seg-5" cx="100" cy="100" r="80" fill="none" stroke-width="22" stroke-dasharray="60 503" stroke-dashoffset="-441"/>
+          </svg>
+          <div class="donut-center">
+            <div>
+              <div class="donut-label">本月支出</div>
+              <div class="donut-value num"><small>NT$</small>20,350</div>
+              <div class="donut-sub">較上月 ↓ 8%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cat-list">
+        <div class="cat-row">
+          <div class="cat-dot dot-1"></div>
+          <div class="cat-name">🍱 餐飲</div>
+          <div class="cat-amount num">8,547</div>
+          <div class="cat-pct num">42%</div>
+        </div>
+        <div class="cat-row">
+          <div class="cat-dot dot-2"></div>
+          <div class="cat-name">🚇 交通</div>
+          <div class="cat-amount num">3,866</div>
+          <div class="cat-pct num">19%</div>
+        </div>
+        <div class="cat-row">
+          <div class="cat-dot dot-3"></div>
+          <div class="cat-name">🎬 娛樂</div>
+          <div class="cat-amount num">2,849</div>
+          <div class="cat-pct num">14%</div>
+        </div>
+        <div class="cat-row">
+          <div class="cat-dot dot-4"></div>
+          <div class="cat-name">🛒 生活</div>
+          <div class="cat-amount num">2,645</div>
+          <div class="cat-pct num">13%</div>
+        </div>
+        <div class="cat-row">
+          <div class="cat-dot dot-5"></div>
+          <div class="cat-name">📦 其他</div>
+          <div class="cat-amount num">2,443</div>
+          <div class="cat-pct num">12%</div>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="tab">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2v9h-5v-6h-4v6H5v-9H3l9-8z"/></svg>
+          <div>首頁</div>
+        </div>
+        <div class="tab active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+          <div>統計</div>
+        </div>
+        <div style="width:56px"></div>
+        <div class="tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>
+          <div>帳戶</div>
+        </div>
+        <div class="tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          <div>我的</div>
+        </div>
+        <button class="fab" aria-label="新增記帳">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">02 · ANALYTICS <small>痛點發現</small></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHONE 3: QUICK INPUT                                          -->
+<!-- ============================================================ -->
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="screen input-screen">
+      <div class="dynamic-island"></div>
+      <div class="input-backdrop">
+        <div class="status-time num">9:41</div>
+        <div class="status-icons">
+          <svg viewBox="0 0 18 12" fill="currentColor"><path d="M1 11h2V8H1v3zm4 0h2V6H5v5zm4 0h2V3H9v8zm4 0h2V0h-2v11z"/></svg>
+          <svg viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 5a8 8 0 0112 0M5 7.5a4 4 0 016 0M8 10v.5"/></svg>
+          <svg viewBox="0 0 24 12" fill="none"><rect x="1" y="2" width="20" height="8" rx="2" stroke="currentColor" stroke-width="1"/><rect x="2.5" y="3.5" width="14" height="5" rx="1" fill="currentColor"/><rect x="22" y="4" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
+        </div>
+        <div class="ghost-text">新增記帳</div>
+      </div>
+
+      <div class="sheet">
+        <div class="drag-handle"></div>
+
+        <div class="input-toggle">
+          <button class="active">支出</button>
+          <button>收入</button>
+          <button>轉帳</button>
+        </div>
+
+        <div class="amount-display">
+          <div class="amount-currency">NT$</div>
+          <div class="amount-value num">450<span class="amount-cursor"></span></div>
+        </div>
+
+        <div class="cat-grid">
+          <button class="cat-btn selected"><div class="cat-btn-icon">🍱</div><div class="cat-btn-name">餐飲</div></button>
+          <button class="cat-btn"><div class="cat-btn-icon">🚇</div><div class="cat-btn-name">交通</div></button>
+          <button class="cat-btn"><div class="cat-btn-icon">🎬</div><div class="cat-btn-name">娛樂</div></button>
+          <button class="cat-btn"><div class="cat-btn-icon">🛒</div><div class="cat-btn-name">生活</div></button>
+          <button class="cat-btn"><div class="cat-btn-icon">🏠</div><div class="cat-btn-name">居家</div></button>
+          <button class="cat-btn"><div class="cat-btn-icon">💊</div><div class="cat-btn-name">健康</div></button>
+          <button class="cat-btn"><div class="cat-btn-icon">📚</div><div class="cat-btn-name">學習</div></button>
+          <button class="cat-btn"><div class="cat-btn-icon">📦</div><div class="cat-btn-name">其他</div></button>
+        </div>
+
+        <div class="meta-row">
+          <button class="meta-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>
+            玉山卡
+          </button>
+          <button class="meta-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            備註
+          </button>
+        </div>
+
+        <div class="keypad">
+          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+          <button class="key">.</button><button class="key">0</button>
+          <button class="key del">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M21 5H8l-5 7 5 7h13a2 2 0 002-2V7a2 2 0 00-2-2zM18 9l-6 6M12 9l6 6"/></svg>
+          </button>
+        </div>
+
+        <button class="confirm-btn">完成</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-label">03 · QUICK INPUT <small>三秒記帳</small></div>
+</div>
+
+</div>
+
+<!-- ============ Tweaks ============ -->
+<div class="tweaks">
+  <span class="tweaks-label">背景</span>
+  <button class="tweaks-btn" data-group="theme" data-value="light">暖灰</button>
+  <button class="tweaks-btn" data-group="theme" data-value="dim">深色</button>
+  <span class="tweaks-divider"></span>
+  <span class="tweaks-label">強調色</span>
+  <button class="tweaks-btn" data-group="accent" data-value="ink">墨</button>
+  <button class="tweaks-btn" data-group="accent" data-value="green">綠</button>
+  <button class="tweaks-btn" data-group="accent" data-value="blue">藍</button>
+</div>
+
+<script>
+const STORAGE_KEY = 'moneymind-tweaks';
+const defaults = { theme: 'light', accent: 'ink' };
+const saved = (() => {
+  try { return Object.assign({}, defaults, JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')); }
+  catch { return defaults; }
+})();
+
+function applyTweaks(state) {
+  document.body.classList.toggle('dim', state.theme === 'dim');
+  if (state.accent === 'ink') document.body.removeAttribute('data-accent');
+  else document.body.setAttribute('data-accent', state.accent);
+  document.querySelectorAll('.tweaks-btn').forEach(b => {
+    const g = b.dataset.group, v = b.dataset.value;
+    b.classList.toggle('active', state[g] === v);
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+applyTweaks(saved);
+
+document.querySelectorAll('.tweaks-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    saved[btn.dataset.group] = btn.dataset.value;
+    applyTweaks(saved);
+  });
+});
+
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+document.querySelectorAll('.input-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.input-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
