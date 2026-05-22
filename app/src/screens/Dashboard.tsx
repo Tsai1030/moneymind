@@ -18,6 +18,7 @@ export function Dashboard() {
   const { month, setMonth, setTab, openDetail } = useUI();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [is3D, setIs3D] = useState(false);
+  const [statsCollapsed, setStatsCollapsed] = useState(false);
   const isThisMonth = month === dayjs().format('YYYY-MM');
   const catMood = useCatMood(month);
 
@@ -96,10 +97,12 @@ export function Dashboard() {
       ) : (
       // ── NORMAL MODE ─────────────────────────────────────
       <>
-      {/* Cat — lazy-loaded, fails silent */}
-      <Suspense fallback={<div style={{ height: 160 }} />}>
-        <CatScene height={160} mood={catMood} />
-      </Suspense>
+      {/* Cat — pull whole stack upward via negative margin */}
+      <div style={{ marginTop: -18 }}>
+        <Suspense fallback={<div style={{ height: 155 }} />}>
+          <CatScene height={155} mood={catMood} />
+        </Suspense>
+      </div>
 
       {/* Budget hero (no top margin → sits flush against cat bottom) */}
       <section className="mx-5 mb-4 p-6 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
@@ -130,13 +133,41 @@ export function Dashboard() {
         )}
       </section>
 
-      <div className="grid grid-cols-2 gap-2.5 mx-5 mb-4">
-        <StatCard label="淨資產" value={netAssets(accounts, txs)} />
-        <StatCard label="今日支出" value={today} suffix={todayCount > 0 ? `${todayCount} 筆` : '尚無'} />
+      {/* Collapsible stats grid — slide-up animation via max-height */}
+      <div
+        className="mx-5 overflow-hidden"
+        style={{
+          maxHeight: statsCollapsed ? 0 : 200,
+          opacity: statsCollapsed ? 0 : 1,
+          marginBottom: statsCollapsed ? 0 : 16,
+          transition: 'max-height 280ms ease, opacity 200ms ease, margin-bottom 280ms ease',
+        }}
+      >
+        <div className="grid grid-cols-2 gap-2.5">
+          <StatCard label="淨資產" value={netAssets(accounts, txs)} />
+          <StatCard label="今日支出" value={today} suffix={todayCount > 0 ? `${todayCount} 筆` : '尚無'} />
+        </div>
       </div>
 
-      <div className="px-7 pt-3 pb-2 flex justify-between text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--text-ink-3)' }}>
-        <span>近期</span>
+      {/* Recent header + collapse toggle for the stats above */}
+      <div className="px-7 pt-2 pb-2 flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--text-ink-3)' }}>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setStatsCollapsed((s) => !s)}
+            aria-label={statsCollapsed ? '展開資產概覽' : '收起資產概覽'}
+            className="w-5 h-5 rounded-full grid place-items-center"
+            style={{ background: 'var(--bg-subtle)' }}
+          >
+            <span
+              className="inline-block w-1.5 h-1.5 border-r-[1.5px] border-b-[1.5px] transition-transform"
+              style={{
+                borderColor: 'var(--text-ink-2)',
+                transform: statsCollapsed ? 'rotate(-135deg) translate(1px, 1px)' : 'rotate(45deg) translate(-1px, -1px)',
+              }}
+            />
+          </button>
+          <span>近期</span>
+        </div>
         <span>{txs.length} 筆 · {dayjs(`${month}-01`).format('M月')}</span>
       </div>
 
