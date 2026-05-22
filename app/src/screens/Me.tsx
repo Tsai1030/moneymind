@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { db, now } from '../db';
 import { useUI } from '../state/useUI';
 import { fmtMoney } from '../lib/format';
+import { CuteCat } from '../cat/CuteCat';
 
 export function Me() {
   const { theme, setTheme, month } = useUI();
@@ -144,8 +145,20 @@ export function Me() {
           {importMsg && <div className="text-[12px] mt-2" style={{ color: 'var(--color-brand-deep)' }}>{importMsg}</div>}
         </section>
 
-        <div className="px-2 pt-4 pb-6 text-center text-[11px]" style={{ color: 'var(--text-ink-3)' }}>
-          MoneyMind · v0.1.0 · 本地優先 PWA
+        <div className="pt-4 pb-6 text-center">
+          <CuteCat size={240} />
+          <div className="text-[11px]" style={{ color: 'var(--text-ink-3)', marginTop: -18 }}>
+            <div>MoneyMind · v0.1.0</div>
+            <a
+              href="https://github.com/Tsai1030"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2"
+              style={{ color: 'var(--text-ink-2)' }}
+            >
+              github.com/Tsai1030
+            </a>
+          </div>
         </div>
       </div>
     </div>

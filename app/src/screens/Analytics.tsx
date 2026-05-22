@@ -7,6 +7,7 @@ import { listTransactionsInMonth, groupByCategory, monthlySpent } from '../db/qu
 import { useUI } from '../state/useUI';
 import { fmtMoney } from '../lib/format';
 import { FilterIcon } from '../components/Icons';
+import { CatInBox } from '../cat/CatInBox';
 
 type Period = 'week' | 'month' | 'quarter' | 'year';
 const periods: { id: Period; label: string }[] = [
@@ -79,11 +80,11 @@ export function Analytics() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto scroll-clean px-5 pb-4">
+      <div className="flex-1 overflow-y-auto scroll-clean px-5 pb-4 flex flex-col">
         {total === 0 ? (
-          <div className="px-6 pt-16 pb-10 text-center" style={{ color: 'var(--text-ink-3)' }}>
-            <div className="text-[40px] mb-2">📊</div>
-            <div className="text-[14px] font-medium">這個月還沒有支出可分析</div>
+          <div className="flex-1 flex flex-col items-center justify-center" style={{ color: 'var(--text-ink-3)' }}>
+            <CatInBox size={220} />
+            <div className="text-[14px] font-medium mt-2">這個月還沒有支出可分析</div>
           </div>
         ) : (
           <>
