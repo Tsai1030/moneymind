@@ -79,9 +79,9 @@ export function Me() {
         <h1 className="text-[22px] font-extrabold tracking-tight">我的</h1>
       </header>
 
-      <div className="flex-1 overflow-y-auto scroll-clean px-5 pb-4">
+      <div className="flex-1 flex flex-col overflow-hidden px-5 pb-2">
         {/* Budget */}
-        <section className="p-5 mb-3 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
+        <section className="p-4 mb-2 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
           <div className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-2" style={{ color: 'var(--text-ink-2)' }}>
             {dayjs(`${month}-01`).format('YYYY 年 M 月')} 預算
           </div>
@@ -112,14 +112,14 @@ export function Me() {
         </section>
 
         {/* Theme */}
-        <section className="p-5 mb-3 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-3" style={{ color: 'var(--text-ink-2)' }}>外觀</div>
+        <section className="p-4 mb-2 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-2" style={{ color: 'var(--text-ink-2)' }}>外觀</div>
           <div className="flex gap-2">
             {(['light', 'dark'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTheme(t)}
-                className="flex-1 py-3 rounded-xl text-[14px] font-semibold"
+                className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold"
                 style={{
                   background: theme === t ? 'var(--accent)' : 'var(--bg-subtle)',
                   color: theme === t ? 'var(--accent-fg)' : 'var(--text-ink)',
@@ -130,14 +130,14 @@ export function Me() {
         </section>
 
         {/* Backup */}
-        <section className="p-5 mb-3 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
+        <section className="p-4 mb-2 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
           <div className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-1" style={{ color: 'var(--text-ink-2)' }}>備份與還原</div>
-          <div className="text-[12px] mb-3" style={{ color: 'var(--text-ink-2)' }}>共 {totalCount} 筆紀錄</div>
+          <div className="text-[12px] mb-2" style={{ color: 'var(--text-ink-2)' }}>共 {totalCount} 筆紀錄</div>
           <div className="flex gap-2">
-            <button onClick={exportData} className="flex-1 py-3 rounded-xl text-[13px] font-semibold" style={{ background: 'var(--bg-subtle)' }}>
+            <button onClick={exportData} className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold" style={{ background: 'var(--bg-subtle)' }}>
               匯出 JSON
             </button>
-            <button onClick={() => fileRef.current?.click()} className="flex-1 py-3 rounded-xl text-[13px] font-semibold" style={{ background: 'var(--bg-subtle)' }}>
+            <button onClick={() => fileRef.current?.click()} className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold" style={{ background: 'var(--bg-subtle)' }}>
               匯入 JSON
             </button>
             <input ref={fileRef} type="file" accept="application/json" onChange={handleImport} className="hidden" />
@@ -145,8 +145,8 @@ export function Me() {
           {importMsg && <div className="text-[12px] mt-2" style={{ color: 'var(--color-brand-deep)' }}>{importMsg}</div>}
         </section>
 
-        <div className="pt-4 pb-6 text-center">
-          <CuteCat size={240} />
+        <div className="flex-1 flex flex-col items-center justify-center text-center min-h-0">
+          <CuteCat size={200} />
           <div className="text-[11px]" style={{ color: 'var(--text-ink-3)', marginTop: -18 }}>
             <div>MoneyMind · v0.1.0</div>
             <a
