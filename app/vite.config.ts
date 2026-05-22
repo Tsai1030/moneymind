@@ -10,6 +10,20 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo.svg', 'apple-touch-icon-180x180.png'],
+      workbox: {
+        // Don't precache large GLB models — lazy fetch only
+        globIgnores: ['**/*.glb'],
+        runtimeCaching: [
+          {
+            urlPattern: /\.glb$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: '3d-assets',
+              expiration: { maxEntries: 8, maxAgeSeconds: 30 * 24 * 60 * 60 },
+            },
+          },
+        ],
+      },
       manifest: {
         name: 'MoneyMind',
         short_name: 'MoneyMind',

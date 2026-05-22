@@ -6,6 +6,7 @@ import type { Holding, Market } from '../db/schema';
 import { fmtMoney } from '../lib/format';
 import { fetchQuote } from '../lib/quote';
 import { BottomSheet } from '../components/BottomSheet';
+import { RainbowCat } from '../cat/RainbowCat';
 
 const MARKET_LABEL: Record<Market, string> = {
   TW: '台股', US: '美股', crypto: '加密', other: '其他',
@@ -144,6 +145,9 @@ export function HoldingsPanel() {
             );
           })
         )}
+
+        {/* Decorative cat — always sits at the very bottom of the list */}
+        <RainbowCat />
       </div>
 
       <HoldingModal

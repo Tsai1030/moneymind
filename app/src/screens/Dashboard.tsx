@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import dayjs from 'dayjs';
 import { db } from '../db';
@@ -8,10 +8,18 @@ import { fmtMoney } from '../lib/format';
 import { SettingsIcon } from '../components/Icons';
 import { MonthPicker } from '../components/MonthPicker';
 
+import { useCatMood } from '../cat/useCatMood';
+
+// Lazy-load both 2D Lottie cat and the full 3D viewer
+const CatScene = lazy(() => import('../cat/CatScene').then((m) => ({ default: m.CatScene })));
+const Viewer3D = lazy(() => import('../cat/Viewer3D').then((m) => ({ default: m.Viewer3D })));
+
 export function Dashboard() {
   const { month, setMonth, setTab, openDetail } = useUI();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [is3D, setIs3D] = useState(false);
   const isThisMonth = month === dayjs().format('YYYY-MM');
+  const catMood = useCatMood(month);
 
   const txs = useLiveQuery(() => listTransactionsInMonth(month), [month]) ?? [];
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
@@ -55,13 +63,46 @@ export function Dashboard() {
             >返回本月</button>
           )}
         </div>
-        <button onClick={() => setTab('me')} className="w-9 h-9 rounded-xl grid place-items-center" style={{ background: 'var(--bg-subtle)' }}>
-          <SettingsIcon width={18} height={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIs3D((s) => !s)}
+            aria-label="切換 3D 模式"
+            className="w-9 h-9 rounded-xl grid place-items-center"
+            style={{ background: is3D ? 'var(--accent)' : 'var(--bg-subtle)' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                fill="#000000"
+                stroke="#FFFFFF"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <button onClick={() => setTab('me')} className="w-9 h-9 rounded-xl grid place-items-center" style={{ background: 'var(--bg-subtle)' }}>
+            <SettingsIcon width={18} height={18} />
+          </button>
+        </div>
       </header>
 
-      {/* Budget hero */}
-      <section className="mx-5 mt-2 mb-4 p-6 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
+      {is3D ? (
+        // ── 3D MODE ─────────────────────────────────────────
+        <div className="flex-1 relative">
+          <Suspense fallback={<div className="h-full grid place-items-center text-[13px]" style={{ color: 'var(--text-ink-3)' }}>載入中…</div>}>
+            <Viewer3D />
+          </Suspense>
+        </div>
+      ) : (
+      // ── NORMAL MODE ─────────────────────────────────────
+      <>
+      {/* Cat — lazy-loaded, fails silent */}
+      <Suspense fallback={<div style={{ height: 160 }} />}>
+        <CatScene height={160} mood={catMood} />
+      </Suspense>
+
+      {/* Budget hero (no top margin → sits flush against cat bottom) */}
+      <section className="mx-5 mb-4 p-6 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>
         <div className="text-[12px] font-semibold uppercase tracking-[0.1em] mb-2.5 flex items-center gap-1.5" style={{ color: 'var(--text-ink-2)' }}>
           <span className="w-1 h-1 rounded-full" style={{ background: 'var(--accent)' }} />
           本月剩餘可用
@@ -147,6 +188,8 @@ export function Dashboard() {
           ))
         )}
       </div>
+      </>
+      )}
 
       <MonthPicker
         open={monthPickerOpen}

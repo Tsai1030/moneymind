@@ -29,3 +29,6 @@ Thumbs.db
 .claude/
 .claude.zip
 *.zip
+
+# Lottie binary intermediates (we commit the extracted .json versions)
+*.lottie
