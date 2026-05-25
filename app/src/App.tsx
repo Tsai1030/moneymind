@@ -5,12 +5,13 @@ import { Dashboard } from './screens/Dashboard';
 import { Analytics } from './screens/Analytics';
 import { Accounts } from './screens/Accounts';
 import { Me } from './screens/Me';
+import { Pet } from './screens/Pet';
 import { BottomNav } from './components/BottomNav';
 import { QuickInputSheet } from './components/QuickInputSheet';
 import { TransactionDetail } from './components/TransactionDetail';
 
 export default function App() {
-  const { tab } = useUI();
+  const { tab, petOpen } = useUI();
 
   useEffect(() => {
     void seedIfEmpty();
@@ -26,6 +27,7 @@ export default function App() {
       <BottomNav />
       <QuickInputSheet />
       <TransactionDetail />
+      {petOpen && <Pet />}
     </>
   );
 }

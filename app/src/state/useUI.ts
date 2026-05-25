@@ -11,6 +11,7 @@ interface UIState {
   inputOpen: boolean;
   editingTxId: string | null;
   detailTxId: string | null;
+  petOpen: boolean;
   setTheme: (t: UIState['theme']) => void;
   setTab: (t: Tab) => void;
   setMonth: (m: string) => void;
@@ -19,6 +20,8 @@ interface UIState {
   closeInput: () => void;
   openDetail: (id: string) => void;
   closeDetail: () => void;
+  openPet: () => void;
+  closePet: () => void;
 }
 
 export const useUI = create<UIState>()(
@@ -30,6 +33,7 @@ export const useUI = create<UIState>()(
       inputOpen: false,
       editingTxId: null,
       detailTxId: null,
+      petOpen: false,
       setTheme: (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         set({ theme });
@@ -41,6 +45,8 @@ export const useUI = create<UIState>()(
       closeInput: () => set({ inputOpen: false, editingTxId: null }),
       openDetail: (id) => set({ detailTxId: id }),
       closeDetail: () => set({ detailTxId: null }),
+      openPet: () => set({ petOpen: true }),
+      closePet: () => set({ petOpen: false }),
     }),
     {
       name: 'moneymind-ui',

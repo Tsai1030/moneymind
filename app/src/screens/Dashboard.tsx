@@ -1,26 +1,38 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import dayjs from 'dayjs';
 import { db } from '../db';
 import { listTransactionsInMonth, monthlySpent, todaySpent } from '../db/queries';
 import { useUI } from '../state/useUI';
+import { usePet } from '../state/usePet';
 import { fmtMoney } from '../lib/format';
 import { SettingsIcon } from '../components/Icons';
 import { MonthPicker } from '../components/MonthPicker';
-
-import { useCatMood } from '../cat/useCatMood';
+import { CatInBox } from '../cat/CatInBox';
+import { derivePetState, petStateToMood, petStateFilter } from '../cat/petState';
 
 // Lazy-load both 2D Lottie cat and the full 3D viewer
 const CatScene = lazy(() => import('../cat/CatScene').then((m) => ({ default: m.CatScene })));
 const Viewer3D = lazy(() => import('../cat/Viewer3D').then((m) => ({ default: m.Viewer3D })));
 
 export function Dashboard() {
-  const { month, setMonth, setTab, openDetail } = useUI();
+  const { month, setMonth, setTab, openDetail, openPet } = useUI();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [is3D, setIs3D] = useState(false);
   const [statsCollapsed, setStatsCollapsed] = useState(false);
   const isThisMonth = month === dayjs().format('YYYY-MM');
-  const catMood = useCatMood(month);
+
+  const petHp = usePet((s) => s.hp);
+  const petTick = usePet((s) => s.tick);
+  const petFeed = usePet((s) => s.feed);
+  const petState = derivePetState(petHp);
+  const catMood = petStateToMood(petState);
+
+  // Tick decay and register an "open" feed on mount
+  useEffect(() => {
+    petTick();
+    petFeed('open');
+  }, [petTick, petFeed]);
 
   const txs = useLiveQuery(() => listTransactionsInMonth(month), [month]) ?? [];
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
@@ -98,11 +110,26 @@ export function Dashboard() {
       // ── NORMAL MODE ─────────────────────────────────────
       <>
       {/* Cat — pull whole stack upward via negative margin */}
-      <div style={{ marginTop: -18 }}>
-        <Suspense fallback={<div style={{ height: 155 }} />}>
-          <CatScene height={155} mood={catMood} />
-        </Suspense>
-      </div>
+      <button
+        type="button"
+        onClick={openPet}
+        aria-label="開啟寵物頁"
+        className="w-full block active:scale-[0.99] transition"
+        style={{ marginTop: -18, background: 'transparent' }}
+      >
+        {petState === 'hiding' ? (
+          <div className="flex flex-col items-center justify-center" style={{ height: 155 }}>
+            <CatInBox size={120} />
+            <div className="text-[11px] mt-1" style={{ color: 'var(--text-ink-3)' }}>貓咪躲起來了 · 記一筆讓牠回來</div>
+          </div>
+        ) : (
+          <div style={{ filter: petStateFilter(petState), transition: 'filter 400ms ease' }}>
+            <Suspense fallback={<div style={{ height: 155 }} />}>
+              <CatScene height={155} mood={catMood} />
+            </Suspense>
+          </div>
+        )}
+      </button>
 
       {/* Budget hero (no top margin → sits flush against cat bottom) */}
       <section className="mx-5 mb-4 p-6 rounded-3xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--hairline)' }}>

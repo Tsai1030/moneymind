@@ -56,6 +56,24 @@
   --cat-5: #D1D5DB;
   --accent: #0A0A0A;
   --accent-fg: #FFFFFF;
+  /* Pet diorama — warm coffee room palette (cat colors unchanged) */
+  --room-floor: #D4C9B5;
+  --room-wall: #F1EBE0;
+  --room-shadow: rgba(70, 55, 40, 0.12);
+  --room-wood: #8B7355;
+  --room-window: linear-gradient(180deg, #C9D8C2 0%, #9FB89B 100%);
+  --room-lamp: #F1DE9F;
+  --pet-color: #1A1816;
+  --pet-belly: rgba(255, 255, 255, 0.08);
+  --pet-pink: #F4B5C3;
+  --pet-eye: #FCD34D;
+  --pet-nose: #E89999;
+  --pet-mouth: rgba(255, 255, 255, 0.55);
+  /* Pet cookies + particle effects */
+  --cookie-color: #C89968;
+  --cookie-dark: #8B6543;
+  --heart-color: #E89499;
+  --hp-up-color: #047857;
 }
 
 html[data-theme="dark"] {
@@ -78,6 +96,23 @@ html[data-theme="dark"] {
   --cat-5: #3A3935;
   --accent: #F5F5F4;
   --accent-fg: #0A0A0A;
+  /* Pet diorama — warm coffee dark variant */
+  --room-floor: #2B251E;
+  --room-wall: #3A3127;
+  --room-shadow: rgba(0, 0, 0, 0.55);
+  --room-wood: #5C4A38;
+  --room-window: linear-gradient(180deg, #3A4A4C 0%, #2A363A 100%);
+  --room-lamp: #8B7349;
+  --pet-color: #ECE7DD;
+  --pet-belly: rgba(0, 0, 0, 0.18);
+  --pet-pink: #C77F8E;
+  --pet-eye: #6EE7B7;
+  --pet-nose: #B07785;
+  --pet-mouth: rgba(0, 0, 0, 0.45);
+  --cookie-color: #D6B083;
+  --cookie-dark: #8B6543;
+  --heart-color: #D97783;
+  --hp-up-color: #6EE7B7;
 }
 
 /* Native picker indicator (calendar/dropdown arrow) — recolor for dark mode */
@@ -146,4 +181,129 @@ button { font-family: inherit; cursor: pointer; }
   scrollbar-width: none;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+/* ── Pet diorama: hand-coded SVG cat animations ────────────────── */
+.rc-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: rc-breathe 3.4s ease-in-out infinite;
+}
+@keyframes rc-breathe {
+  0%, 100% { transform: scaleY(1) translateY(0); }
+  50%      { transform: scaleY(1.025) translateY(-1.5px); }
+}
+
+.rc-tail {
+  transform-box: fill-box;
+  transform-origin: 12% 92%;
+  animation: rc-tail-wag 2.4s ease-in-out infinite;
+}
+@keyframes rc-tail-wag {
+  0%, 100% { transform: rotate(-7deg); }
+  50%      { transform: rotate(9deg); }
+}
+
+.rc-eyes {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: rc-blink 5.4s ease-in-out infinite;
+}
+@keyframes rc-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94%, 97%      { transform: scaleY(0.08); }
+}
+
+/* State-driven tempo */
+.rc-state-thriving .rc-tail { animation-duration: 1.4s; }
+.rc-state-thriving .rc-body { animation: rc-bounce 2.6s ease-in-out infinite; }
+@keyframes rc-bounce {
+  0%, 55%, 100% { transform: translateY(0) scaleY(1); }
+  30%           { transform: translateY(1px) scaleY(0.96); }
+  40%           { transform: translateY(-7px) scaleY(1.05); }
+}
+
+.rc-state-happy .rc-tail { animation-duration: 1.9s; }
+.rc-state-ok    .rc-tail { animation-duration: 2.8s; }
+.rc-state-ok    .rc-body { animation-duration: 4s; }
+
+.rc-state-hungry .rc-tail { animation-duration: 4.5s; }
+.rc-state-hungry .rc-body { animation-duration: 5s; }
+
+.rc-state-sick .rc-tail { animation-duration: 7s; }
+.rc-state-sick .rc-body { animation-duration: 6s; }
+.rc-state-sick .rc-eyes { animation: rc-sleepy 4s ease-in-out infinite; }
+@keyframes rc-sleepy {
+  0%, 100% { transform: scaleY(0.25); }
+  50%      { transform: scaleY(0.08); }
+}
+
+/* ── Pet cookies + particle effects ──────────────────────────── */
+.pet-cookie {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cookie-color);
+  border: 2px solid var(--cookie-dark);
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 2px 0 -1px var(--room-shadow);
+  transition: transform 150ms ease;
+  padding: 0;
+}
+.pet-cookie:hover { transform: translateY(-2px) scale(1.08); }
+.pet-cookie::before,
+.pet-cookie::after {
+  content: '';
+  position: absolute;
+  background: var(--cookie-dark);
+  border-radius: 50%;
+  width: 2.5px;
+  height: 2.5px;
+}
+.pet-cookie::before { top: 4px; left: 5px; }
+.pet-cookie::after  { bottom: 4px; right: 4px; }
+
+.pet-cookie-flying {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  animation: pet-cookie-fly 600ms cubic-bezier(0.5, 0, 0.8, 0.6) forwards;
+}
+@keyframes pet-cookie-fly {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+  70%  { transform: translate(var(--fly-dx, 0), var(--fly-dy, -200px)) scale(1.4) rotate(180deg); opacity: 1; }
+  100% { transform: translate(var(--fly-dx, 0), var(--fly-dy, -200px)) scale(0.2) rotate(360deg); opacity: 0; }
+}
+
+.pet-hp-floater {
+  position: fixed;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--hp-up-color);
+  pointer-events: none;
+  letter-spacing: -0.02em;
+  z-index: 200;
+  translate: -50% 0;
+  animation: pet-hp-float 1200ms ease-out forwards;
+}
+@keyframes pet-hp-float {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  20%  { transform: translateY(-8px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-60px) scale(1); opacity: 0; }
+}
+
+.pet-heart {
+  position: fixed;
+  pointer-events: none;
+  color: var(--heart-color);
+  z-index: 200;
+  translate: -50% 0;
+  animation: pet-heart-rise var(--rise-dur, 1100ms) ease-out forwards;
+  font-weight: 700;
+}
+@keyframes pet-heart-rise {
+  0%   { transform: translate(0, 0) scale(0.5) rotate(var(--rot, 0deg)); opacity: 0; }
+  25%  { transform: translate(var(--drift, 0), -16px) scale(1.1) rotate(var(--rot, 0deg)); opacity: 1; }
+  100% { transform: translate(var(--drift, 0), -80px) scale(0.8) rotate(var(--rot, 0deg)); opacity: 0; }
 }

@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { db, uid, now } from './index';
 import type { Transaction } from './schema';
+import { usePet } from '../state/usePet';
 
 export type NewTransactionInput = Omit<Transaction, 'id' | 'source' | 'createdAt' | 'updatedAt' | 'deletedAt'> & {
   source?: Transaction['source'];
@@ -16,6 +17,11 @@ export async function addTransaction(input: NewTransactionInput): Promise<string
     createdAt: ts,
     updatedAt: ts,
   });
+  // Each non-transfer record drops a cookie into the pet's jar.
+  // The user manually feeds it later from the Pet page.
+  if (input.kind !== 'transfer') {
+    usePet.getState().awardCookie();
+  }
   return id;
 }
 
