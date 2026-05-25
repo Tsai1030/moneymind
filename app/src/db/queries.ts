@@ -37,6 +37,10 @@ export function monthRange(month: string) {
 
 export async function listTransactionsInMonth(month: string): Promise<Transaction[]> {
   const { start, end } = monthRange(month);
+  return listTransactionsInRange(start, end);
+}
+
+export async function listTransactionsInRange(start: string, end: string): Promise<Transaction[]> {
   const all = await db.transactions
     .where('date')
     .between(start, end, true, true)

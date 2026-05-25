@@ -9,8 +9,11 @@ import { CuteCat } from '../cat/CuteCat';
 export function Me() {
   const { theme, setTheme, month } = useUI();
   const budget = useLiveQuery(() => db.budgets.get(month), [month]);
+  const categories = useLiveQuery(() => db.categories.toArray()) ?? [];
+  const expenseCats = categories.filter((c) => c.name !== '收入').sort((a, b) => a.order - b.order);
   const [budgetInput, setBudgetInput] = useState('');
   const [editing, setEditing] = useState(false);
+  const [perCatOpen, setPerCatOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importMsg, setImportMsg] = useState<string | null>(null);
 
@@ -31,6 +34,20 @@ export function Me() {
     });
     setEditing(false);
     setBudgetInput('');
+  }
+
+  async function savePerCategory(catId: string, raw: string) {
+    const n = parseFloat(raw);
+    const next = { ...(budget?.perCategory ?? {}) };
+    if (!Number.isFinite(n) || n <= 0) delete next[catId];
+    else next[catId] = n;
+    await db.budgets.put({
+      id: month,
+      month,
+      totalAmount: budget?.totalAmount ?? 0,
+      perCategory: next,
+      updatedAt: now(),
+    });
   }
 
   async function exportData() {
@@ -109,6 +126,43 @@ export function Me() {
               <button onClick={() => { setEditing(true); setBudgetInput(String(budget?.totalAmount ?? '')); }} className="text-[13px] font-semibold px-3 py-1.5 rounded-full" style={{ background: 'var(--bg-subtle)' }}>編輯</button>
             </div>
           )}
+
+          <button
+            onClick={() => setPerCatOpen((s) => !s)}
+            className="mt-3 -mb-1 flex items-center gap-1.5 text-[12px] font-semibold"
+            style={{ color: 'var(--text-ink-2)' }}
+          >
+            <span
+              className="inline-block w-1.5 h-1.5 border-r-[1.5px] border-b-[1.5px] transition-transform"
+              style={{
+                borderColor: 'var(--text-ink-2)',
+                transform: perCatOpen ? 'rotate(45deg) translate(-1px, -1px)' : 'rotate(-45deg) translate(1px, 1px)',
+              }}
+            />
+            子預算（分類）
+            <span style={{ color: 'var(--text-ink-3)' }}>
+              {' · '}{Object.values(budget?.perCategory ?? {}).filter((v) => v > 0).length} / {expenseCats.length}
+            </span>
+          </button>
+          <div
+            className="overflow-hidden"
+            style={{
+              maxHeight: perCatOpen ? 1000 : 0,
+              opacity: perCatOpen ? 1 : 0,
+              transition: 'max-height 280ms ease, opacity 200ms ease',
+            }}
+          >
+            <div className="pt-3 mt-2 border-t" style={{ borderColor: 'var(--hairline)' }}>
+              {expenseCats.map((c) => (
+                <PerCatRow
+                  key={c.id}
+                  cat={c}
+                  value={budget?.perCategory?.[c.id] ?? 0}
+                  onSave={(v) => savePerCategory(c.id, v)}
+                />
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* Theme */}
@@ -161,6 +215,41 @@ export function Me() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PerCatRow({
+  cat, value, onSave,
+}: {
+  cat: { id: string; name: string; icon: string };
+  value: number;
+  onSave: (v: string) => void | Promise<void>;
+}) {
+  const [draft, setDraft] = useState(value > 0 ? String(value) : '');
+  return (
+    <div className="flex items-center gap-2.5 py-1.5">
+      <div className="w-7 h-7 rounded-lg grid place-items-center text-[14px] shrink-0" style={{ background: 'var(--bg-subtle)' }}>
+        {cat.icon}
+      </div>
+      <div className="text-[13px] font-semibold flex-1 truncate">{cat.name}</div>
+      <span className="text-[11px]" style={{ color: 'var(--text-ink-3)' }}>NT$</span>
+      <input
+        type="number"
+        inputMode="decimal"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => {
+          const next = parseFloat(draft);
+          const current = value;
+          if ((!Number.isFinite(next) || next <= 0) && current === 0) return;
+          if (next === current) return;
+          void onSave(draft);
+        }}
+        placeholder="未設"
+        className="w-20 px-2 py-1.5 rounded-lg num text-[13px] text-right outline-none"
+        style={{ background: 'var(--bg-subtle)' }}
+      />
     </div>
   );
 }
