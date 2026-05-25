@@ -1,0 +1,1805 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoneyMind · 寵物頁設計探索</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── App tokens (sync with src/index.css) ─────────────────── */
+    :root {
+      color-scheme: light;
+      --bg-base: #FFFFFF;
+      --bg-elevated: #FAF9F6;
+      --bg-subtle: #F2F1ED;
+      --text-ink: #0A0A0A;
+      --text-ink-2: #4B5563;
+      --text-ink-3: #9CA3AF;
+      --tip-text: #1F1B0E;
+      --warning-soft: #FCEFC7;
+      --warning-deep: #7C5108;
+      --hairline: rgba(10, 10, 10, 0.06);
+      --hairline-2: rgba(10, 10, 10, 0.10);
+      --color-brand: #10B981;
+      --color-brand-deep: #047857;
+      --color-brand-soft: #D1FAE5;
+      --color-danger: #DC2626;
+      --accent: #0A0A0A;
+      --accent-fg: #FFFFFF;
+      /* room scene */
+      --room-floor: #D4C9B5;
+      --room-wall: #F1EBE0;
+      --room-shadow: rgba(70, 55, 40, 0.12);
+      --room-wood: #8B7355;
+      --room-window: linear-gradient(180deg, #C9D8C2 0%, #9FB89B 100%);
+      --room-lamp: #F1DE9F;
+      /* cat palette — warm coffee/grey, not stark black */
+      --cat-color: #6B5D4D;
+      --cat-belly: #E8DAC1;
+      --cat-pink: #D9A29D;
+      --cat-eye: #B89968;
+      --cat-nose: #C99595;
+      --cat-mouth: rgba(50, 35, 20, 0.55);
+      /* cookies & particles */
+      --cookie-color: #C89968;
+      --cookie-dark: #8B6543;
+      --heart-color: #E89499;
+      --hp-up-color: #047857;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg-base: #111111;
+      --bg-elevated: #1A1A18;
+      --bg-subtle: #26241F;
+      --text-ink: #F5F5F4;
+      --text-ink-2: #B4B0A8;
+      --text-ink-3: #74726B;
+      --tip-text: #FDE68A;
+      --warning-soft: #3A2E0F;
+      --warning-deep: #FBBF24;
+      --hairline: rgba(255, 255, 255, 0.06);
+      --hairline-2: rgba(255, 255, 255, 0.12);
+      --color-brand: #34D399;
+      --color-brand-deep: #6EE7B7;
+      --color-brand-soft: #064E3B;
+      --accent: #F5F5F4;
+      --accent-fg: #0A0A0A;
+      --room-floor: #2B251E;
+      --room-wall: #3A3127;
+      --room-shadow: rgba(0,0,0,0.55);
+      --room-wood: #5C4A38;
+      --room-window: linear-gradient(180deg, #3A4A4C 0%, #2A363A 100%);
+      --room-lamp: #8B7349;
+      --cat-color: #C9BAA4;
+      --cat-belly: #8B7A65;
+      --cat-pink: #A87878;
+      --cat-eye: #6EE7B7;
+      --cat-nose: #A06863;
+      --cat-mouth: rgba(0, 0, 0, 0.5);
+      --cookie-color: #D6B083;
+      --cookie-dark: #8B6543;
+      --heart-color: #D97783;
+      --hp-up-color: #6EE7B7;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Plus Jakarta Sans", "Noto Sans TC", system-ui, sans-serif;
+      background: var(--workbench-bg, #E8E6E0);
+      color: var(--text-ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    [data-theme="dark"] body { --workbench-bg: #0B0A09; }
+
+    .num {
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      letter-spacing: -0.02em;
+    }
+
+    /* ─── Workbench chrome ─────────────────────────────────────── */
+    .chrome {
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .chrome h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-ink);
+      letter-spacing: -0.01em;
+    }
+    .chrome .sub {
+      font-size: 12px;
+      color: var(--text-ink-2);
+      font-weight: 500;
+    }
+    .chrome .spacer { flex: 1; }
+    .tabs {
+      display: inline-flex;
+      background: var(--bg-base);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .tabs button {
+      border: 0;
+      background: transparent;
+      font-family: inherit;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text-ink-2);
+      transition: all 150ms ease;
+    }
+    .tabs button[aria-selected="true"] {
+      background: var(--text-ink);
+      color: var(--bg-base);
+    }
+    .theme-toggle {
+      border: 0;
+      background: var(--bg-base);
+      color: var(--text-ink);
+      font-family: inherit;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* ─── Stage ─────────────────────────────────────────────────── */
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 32px 64px;
+    }
+    .phone {
+      width: 480px;
+      height: 880px;
+      background: var(--bg-base);
+      border-radius: 48px;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 0 0 8px #18171420,
+        0 30px 60px -20px rgba(0,0,0,0.25);
+      display: flex;
+      flex-direction: column;
+    }
+    [data-theme="dark"] .phone {
+      box-shadow:
+        0 0 0 8px #00000050,
+        0 30px 60px -20px rgba(0,0,0,0.6);
+    }
+    .variant { display: none; flex-direction: column; height: 100%; }
+    .variant.active { display: flex; }
+
+    /* ─── Shared header for all variants ────────────────────────── */
+    .v-header {
+      padding: 20px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--bg-subtle);
+      border: 0;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--text-ink);
+    }
+    .icon-btn svg { width: 18px; height: 18px; }
+    .h-eyebrow {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-ink-3);
+    }
+
+    /* ──────────────────────────────────────────────────────────────
+       VARIANT 1: LIVING CARD — calm, refined, single-card layout
+       ────────────────────────────────────────────────────────────── */
+    .v1-cat-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 28px;
+      position: relative;
+    }
+    .v1-cat-wrap::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -45%);
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--bg-elevated) 0%, transparent 70%);
+      z-index: 0;
+    }
+    .v1-cat {
+      position: relative;
+      z-index: 1;
+      font-size: 140px;
+      line-height: 1;
+      filter: var(--cat-filter, none);
+      transition: filter 400ms ease;
+    }
+    .v1-name {
+      position: relative;
+      z-index: 1;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .v1-name .edit-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-ink-3);
+    }
+    .v1-state {
+      position: relative;
+      z-index: 1;
+      font-size: 13px;
+      color: var(--text-ink-2);
+      font-weight: 500;
+    }
+
+    .v1-card {
+      margin: 0 16px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--hairline);
+      border-radius: 28px;
+      padding: 20px;
+    }
+    .v1-hp-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .v1-hp-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-ink-2);
+    }
+    .v1-hp-num {
+      font-size: 22px;
+      font-weight: 800;
+      font-feature-settings: "tnum" 1;
+      letter-spacing: -0.02em;
+    }
+    .v1-hp-num .of {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-ink-3);
+      margin-left: 2px;
+    }
+    .v1-hp-track {
+      height: 10px;
+      background: var(--bg-subtle);
+      border-radius: 999px;
+      position: relative;
+      overflow: hidden;
+    }
+    .v1-hp-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: var(--hp-pct, 80%);
+      background: var(--hp-color, var(--color-brand));
+      border-radius: 999px;
+      transition: width 500ms ease, background 400ms ease;
+    }
+    .v1-hp-marker {
+      position: absolute;
+      top: -6px;
+      left: var(--hp-pct, 80%);
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      background: var(--bg-base);
+      border: 2px solid var(--hp-color, var(--color-brand));
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      transition: left 500ms ease, border-color 400ms ease;
+    }
+    .v1-hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-ink-3);
+    }
+
+    .v1-divider {
+      margin: 18px -4px;
+      height: 1px;
+      background: var(--hairline);
+    }
+
+    .v1-feeds {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .v1-feed-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .v1-feed-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--bg-subtle);
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .v1-feed-text {
+      flex: 1;
+    }
+    .v1-feed-name {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .v1-feed-sub {
+      font-size: 11px;
+      color: var(--text-ink-3);
+      margin-top: 2px;
+    }
+    .v1-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .v1-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--hairline);
+    }
+    .v1-dot.done {
+      background: var(--color-brand);
+      border-color: var(--color-brand);
+    }
+
+    .v1-cta {
+      margin: 0 16px 16px;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: 0;
+      padding: 18px;
+      border-radius: 20px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+    .v1-cta:disabled { opacity: 0.4; cursor: not-allowed; }
+    .v1-footer {
+      text-align: center;
+      padding: 0 0 18px;
+      font-size: 10px;
+      color: var(--text-ink-3);
+    }
+
+    /* ──────────────────────────────────────────────────────────────
+       VARIANT 2: ROOM DIORAMA — playful, drawn room with objects
+       ────────────────────────────────────────────────────────────── */
+    .v2-room {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(180deg, var(--room-wall) 0%, var(--room-wall) 60%, var(--room-floor) 60%, var(--room-floor) 100%);
+      overflow: hidden;
+    }
+    .v2-window {
+      position: absolute;
+      top: 32px;
+      right: 28px;
+      width: 110px;
+      height: 90px;
+      border-radius: 12px;
+      background: var(--room-window);
+      border: 4px solid var(--room-wood);
+      box-shadow: 0 1px 0 0 var(--room-shadow);
+    }
+    .v2-window::before,
+    .v2-window::after {
+      content: '';
+      position: absolute;
+      background: var(--room-wood);
+    }
+    .v2-window::before { inset: 0 50% 0 50%; transform: translateX(-50%); width: 3px; }
+    .v2-window::after { inset: 50% 0 50% 0; transform: translateY(-50%); height: 3px; }
+
+    .v2-lamp {
+      position: absolute;
+      top: 28px;
+      left: 32px;
+      width: 6px;
+      height: 100px;
+      background: var(--room-wood);
+      border-radius: 2px;
+    }
+    .v2-lamp::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -23px;
+      width: 52px;
+      height: 32px;
+      background: var(--room-lamp);
+      border-radius: 26px 26px 4px 4px;
+      border: 1.5px solid var(--room-wood);
+      box-shadow: 0 0 24px 4px var(--room-lamp);
+    }
+
+    .v2-frame {
+      position: absolute;
+      top: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 64px;
+      height: 84px;
+      background: var(--bg-elevated);
+      border: 3px solid var(--room-wood);
+      border-radius: 4px;
+      padding: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+    }
+
+    /* ─── Cookie tray ─── */
+    .v2-tray {
+      position: absolute;
+      bottom: 36px;
+      right: 24px;
+      width: 110px;
+      height: 28px;
+      background: var(--room-wood);
+      border-radius: 4px 4px 12px 12px;
+      box-shadow: 0 2px 0 0 var(--room-shadow);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 6px;
+      padding-bottom: 4px;
+    }
+    .v2-tray-label {
+      position: absolute;
+      bottom: 68px;
+      right: 24px;
+      width: 110px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--text-ink-2);
+      text-transform: uppercase;
+    }
+    .cookie {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--cookie-color);
+      border: 2px solid var(--cookie-dark);
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 2px 0 -1px var(--room-shadow);
+      transition: transform 150ms ease;
+    }
+    .cookie::before, .cookie::after, .cookie > i {
+      content: '';
+      position: absolute;
+      background: var(--cookie-dark);
+      border-radius: 50%;
+    }
+    .cookie::before { width: 3px; height: 3px; top: 4px; left: 6px; }
+    .cookie::after  { width: 3px; height: 3px; bottom: 4px; right: 5px; }
+    .cookie > i     { width: 3px; height: 3px; top: 9px; right: 4px; display: block; }
+    .cookie:hover { transform: translateY(-2px) scale(1.08); }
+    .cookie.flying {
+      position: fixed;
+      z-index: 200;
+      pointer-events: none;
+      animation: cookie-fly 600ms cubic-bezier(0.5, 0, 0.8, 0.6) forwards;
+    }
+    @keyframes cookie-fly {
+      0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+      70%  { transform: translate(var(--fly-dx, 0), var(--fly-dy, -200px)) scale(1.4) rotate(180deg); opacity: 1; }
+      100% { transform: translate(var(--fly-dx, 0), var(--fly-dy, -200px)) scale(0.2) rotate(360deg); opacity: 0; }
+    }
+
+    /* Cat munch animation when eating */
+    .v2-cat.eating .rc-body {
+      animation: rc-munch 500ms ease-in-out;
+    }
+    @keyframes rc-munch {
+      0%, 100% { transform: scaleY(1); }
+      30%      { transform: scaleY(1.05) translateY(-3px); }
+      60%      { transform: scaleY(0.96) translateY(2px); }
+    }
+
+    /* Cat bounce when greeted */
+    .v2-cat.greeted .rc-body {
+      animation: rc-greet-bounce 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes rc-greet-bounce {
+      0%, 100% { transform: translateY(0); }
+      40%      { transform: translateY(-14px) scaleY(1.08); }
+      70%      { transform: translateY(4px) scaleY(0.94); }
+    }
+
+    /* HP floater */
+    .hp-floater {
+      position: absolute;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--hp-up-color);
+      pointer-events: none;
+      animation: hp-float 1200ms ease-out forwards;
+      letter-spacing: -0.02em;
+      z-index: 50;
+    }
+    @keyframes hp-float {
+      0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+      20%  { transform: translateY(-8px) scale(1.1); opacity: 1; }
+      100% { transform: translateY(-60px) scale(1); opacity: 0; }
+    }
+
+    /* Heart particles */
+    .heart {
+      position: absolute;
+      pointer-events: none;
+      color: var(--heart-color);
+      font-size: 18px;
+      animation: heart-rise var(--rise-dur, 1100ms) ease-out forwards;
+      z-index: 40;
+    }
+    @keyframes heart-rise {
+      0%   { transform: translate(0, 0) scale(0.5) rotate(var(--rot, 0deg)); opacity: 0; }
+      25%  { transform: translate(var(--drift, 0), -16px) scale(1.1) rotate(var(--rot, 0deg)); opacity: 1; }
+      100% { transform: translate(var(--drift, 0), -80px) scale(0.8) rotate(var(--rot, 0deg)); opacity: 0; }
+    }
+
+    .v2-cat {
+      position: absolute;
+      bottom: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 210px;
+      height: 250px;
+      color: var(--cat-color);
+      filter: var(--cat-filter, none) drop-shadow(0 6px 0 var(--room-shadow));
+      transition: left 2800ms ease-in-out, transform 250ms ease, filter 400ms ease;
+      will-change: left, transform;
+    }
+    .v2-cat svg { width: 100%; height: 100%; overflow: visible; }
+
+    /* ─── Hand-coded cat: SVG + CSS keyframes ─── */
+    .rc-body {
+      transform-box: fill-box;
+      transform-origin: 50% 100%;
+      animation: rc-breathe 3.4s ease-in-out infinite;
+    }
+    @keyframes rc-breathe {
+      0%, 100% { transform: scaleY(1) translateY(0); }
+      50%      { transform: scaleY(1.025) translateY(-1.5px); }
+    }
+
+    .rc-tail {
+      transform-box: fill-box;
+      transform-origin: 12% 92%;
+      animation: rc-tail-wag 2.4s ease-in-out infinite;
+    }
+    @keyframes rc-tail-wag {
+      0%, 100% { transform: rotate(-7deg); }
+      50%      { transform: rotate(9deg); }
+    }
+
+    /* ── Eye expressions — hide all except the one matching data-current ── */
+    .rc-eyes:not([data-current="normal"]) g[data-eye="normal"] { display: none; }
+    .rc-eyes:not([data-current="smile"])  g[data-eye="smile"]  { display: none; }
+    .rc-eyes:not([data-current="heart"])  g[data-eye="heart"]  { display: none; }
+    .rc-eyes:not([data-current="cry"])    g[data-eye="cry"]    { display: none; }
+    .rc-eyes:not([data-current="closed"]) g[data-eye="closed"] { display: none; }
+
+    /* Blink only on normal eyes — applied via .rc-blink wrapper inside the group */
+    .rc-eyes[data-current="normal"] .rc-blink {
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      animation: rc-blink 5.4s ease-in-out infinite;
+    }
+    @keyframes rc-blink {
+      0%, 92%, 100% { transform: scaleY(1); }
+      94%, 97%      { transform: scaleY(0.08); }
+    }
+
+    /* Heart eye pulse */
+    .rc-heart-eye {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: rc-heart-pulse 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes rc-heart-pulse {
+      from { transform: scale(0.88); }
+      to   { transform: scale(1.18); }
+    }
+
+    /* Tear falling */
+    .rc-tear {
+      transform-box: fill-box;
+      animation: rc-tear-fall 1.6s ease-in 0.4s infinite;
+    }
+    .rc-tear-2 { animation-delay: 1.1s; }
+    @keyframes rc-tear-fall {
+      0%   { transform: translateY(0); opacity: 0; }
+      15%  { opacity: 0.9; }
+      80%  { opacity: 0.6; }
+      100% { transform: translateY(22px); opacity: 0; }
+    }
+
+    /* ── Walking ── */
+    /* Subtle whole-body bob via CSS `translate` so it doesn't clobber `transform`. */
+    .v2-cat.walking { animation: cat-bob 0.5s ease-in-out infinite; }
+    @keyframes cat-bob {
+      0%, 100% { translate: 0 0; }
+      50%      { translate: 0 -1.5px; }
+    }
+
+    /* 4-leg walking gait — diagonal pairs alternate (cat-like gait):
+       FL + BR step together, then FR + BL. */
+    .rc-leg {
+      transform-box: fill-box;
+      transform-origin: 50% 100%;
+      transition: transform 220ms ease;
+    }
+    .v2-cat.walking .leg-fl,
+    .v2-cat.walking .leg-br {
+      animation: rc-step-a 0.5s ease-in-out infinite;
+    }
+    .v2-cat.walking .leg-fr,
+    .v2-cat.walking .leg-bl {
+      animation: rc-step-b 0.5s ease-in-out infinite;
+    }
+    @keyframes rc-step-a {
+      0%, 50%, 100% { transform: translateY(0); }
+      15%, 35%      { transform: translateY(-6px); }
+    }
+    @keyframes rc-step-b {
+      0%, 50%, 100% { transform: translateY(0); }
+      65%, 85%      { transform: translateY(-6px); }
+    }
+
+    /* State-driven mood */
+    .rc-state-thriving .rc-tail { animation-duration: 1.4s; }
+    .rc-state-thriving .rc-body { animation: rc-bounce 2.6s ease-in-out infinite; }
+    @keyframes rc-bounce {
+      0%, 55%, 100% { transform: translateY(0) scaleY(1); }
+      30%           { transform: translateY(1px) scaleY(0.96); }
+      40%           { transform: translateY(-7px) scaleY(1.05); }
+    }
+
+    .rc-state-happy .rc-tail { animation-duration: 1.9s; }
+
+    .rc-state-ok .rc-tail { animation-duration: 2.8s; }
+    .rc-state-ok .rc-body { animation-duration: 4s; }
+
+    .rc-state-hungry .rc-tail { animation-duration: 4.5s; }
+    .rc-state-hungry .rc-body { animation-duration: 5s; }
+    .rc-state-hungry { transform: translateY(4px); }
+    .rc-state-hungry .rc-mouth-down { stroke: var(--cat-mouth); }
+
+    .rc-state-sick .rc-tail { animation-duration: 7s; }
+    .rc-state-sick .rc-body { animation-duration: 6s; }
+    .rc-state-sick .rc-eyes { animation: rc-sleepy 4s ease-in-out infinite; }
+    @keyframes rc-sleepy {
+      0%, 100% { transform: scaleY(0.25); }
+      50%      { transform: scaleY(0.08); }
+    }
+    .rc-state-sick { filter: grayscale(0.35); transform: translateY(6px); }
+
+    .v2-bowl {
+      position: absolute;
+      bottom: 56px;
+      left: 56px;
+      width: 64px;
+      height: 28px;
+      background: var(--bg-subtle);
+      border: 2px solid var(--text-ink);
+      border-radius: 0 0 32px 32px / 0 0 28px 28px;
+      overflow: hidden;
+    }
+    .v2-bowl::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--hp-pct, 80%);
+      background: var(--hp-color, var(--color-brand));
+      transition: height 500ms ease, background 400ms ease;
+    }
+    .v2-bowl-label {
+      position: absolute;
+      bottom: 36px;
+      left: 56px;
+      width: 64px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-ink-2);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .v2-ball {
+      position: absolute;
+      bottom: 56px;
+      right: 64px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--color-danger);
+      border: 2px solid var(--text-ink);
+      box-shadow: 0 4px 0 -2px var(--room-shadow);
+    }
+    .v2-doorway {
+      position: absolute;
+      bottom: 0;
+      right: 22px;
+      width: 56px;
+      height: 110px;
+      background: var(--bg-elevated);
+      border-top: 3px solid var(--text-ink);
+      border-left: 3px solid var(--text-ink);
+      border-right: 3px solid var(--text-ink);
+      border-radius: 28px 28px 0 0;
+    }
+    .v2-doorway::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text-ink-2);
+    }
+
+    .v2-card {
+      background: var(--bg-base);
+      border-top: 1px solid var(--hairline);
+      padding: 20px;
+    }
+    .v2-name-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .v2-name {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .v2-state-pill {
+      padding: 4px 12px;
+      background: var(--bg-subtle);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-ink-2);
+    }
+    .v2-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .v2-stat {
+      padding: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--hairline);
+      border-radius: 14px;
+      text-align: center;
+    }
+    .v2-stat.full {
+      background: var(--color-brand-soft);
+      border-color: var(--color-brand);
+    }
+    [data-theme="dark"] .v2-stat.full {
+      background: var(--color-brand-soft);
+    }
+    .v2-stat-icon { font-size: 16px; }
+    .v2-stat-val {
+      font-size: 14px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+    .v2-stat-label {
+      font-size: 9px;
+      color: var(--text-ink-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 2px;
+    }
+    .v2-cta {
+      width: 100%;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: 0;
+      padding: 16px;
+      border-radius: 18px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+
+    /* ──────────────────────────────────────────────────────────────
+       VARIANT 3: TAMAGOTCHI HUD — retro pixel game device
+       ────────────────────────────────────────────────────────────── */
+    .v3-device {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 24px 28px;
+      background: linear-gradient(180deg, var(--bg-subtle) 0%, var(--bg-elevated) 100%);
+    }
+    .v3-bezel {
+      width: 100%;
+      max-width: 360px;
+      background: #18171A;
+      border-radius: 28px;
+      padding: 18px;
+      box-shadow:
+        inset 0 0 0 2px #2A282E,
+        0 8px 20px -8px rgba(0,0,0,0.4);
+    }
+    [data-theme="dark"] .v3-bezel { background: #050505; box-shadow: inset 0 0 0 2px #1A1A1A, 0 8px 20px -8px rgba(0,0,0,0.6); }
+    .v3-screen-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px 8px;
+      font-family: "DM Mono", monospace;
+      font-size: 10px;
+      color: #9EE2A8;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+    .v3-screen {
+      background: #BDD9B8;
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 260px;
+      position: relative;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.18);
+      font-family: "DM Mono", monospace;
+      color: #213A1C;
+    }
+    [data-theme="dark"] .v3-screen { background: #2D3D2B; color: #BDD9B8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+
+    .v3-hearts {
+      display: flex;
+      gap: 6px;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
+    .v3-heart {
+      width: 14px;
+      height: 12px;
+      position: relative;
+      transform: rotate(-45deg);
+      background: currentColor;
+    }
+    .v3-heart::before, .v3-heart::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: currentColor;
+      border-radius: 50%;
+    }
+    .v3-heart::before { top: -4px; left: 0; }
+    .v3-heart::after { top: 0; right: -4px; }
+    .v3-heart.empty {
+      background: transparent;
+      border: 1.5px solid currentColor;
+      box-sizing: content-box;
+    }
+    .v3-heart.empty::before, .v3-heart.empty::after { background: transparent; border: 1.5px solid currentColor; }
+
+    .v3-cat-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+      font-size: 100px;
+      line-height: 1;
+      filter: var(--cat-filter, none);
+      transition: filter 400ms ease;
+    }
+    .v3-status {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .v3-day {
+      font-size: 9px;
+      text-align: center;
+      opacity: 0.7;
+      margin-top: 2px;
+      letter-spacing: 0.1em;
+    }
+
+    .v3-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .v3-btn {
+      background: #2A282E;
+      color: #BDD9B8;
+      border: 0;
+      padding: 10px 6px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-family: "DM Mono", monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      box-shadow:
+        inset 0 1px 0 0 #3D3B43,
+        0 2px 0 0 #0E0D10;
+      transition: transform 60ms ease, box-shadow 60ms ease;
+    }
+    .v3-btn:active {
+      transform: translateY(2px);
+      box-shadow:
+        inset 0 1px 0 0 #3D3B43,
+        0 0 0 0 #0E0D10;
+    }
+    [data-theme="dark"] .v3-btn { background: #1A1A1A; box-shadow: inset 0 1px 0 0 #2A2A2A, 0 2px 0 0 #000; }
+
+    .v3-cta-bar {
+      padding: 16px 24px 0;
+    }
+    .v3-cta {
+      width: 100%;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: 0;
+      padding: 16px;
+      border-radius: 18px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+    .v3-footer {
+      text-align: center;
+      padding: 12px 0 16px;
+      font-size: 10px;
+      color: var(--text-ink-3);
+    }
+
+    /* ─── Tweaks panel ─────────────────────────────────────────── */
+    .tweaks {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: var(--bg-base);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+      min-width: 260px;
+      z-index: 100;
+      border: 1px solid var(--hairline);
+    }
+    .tweaks h2 {
+      margin: 0 0 12px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-ink-2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tweaks .row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .tweaks .row:last-child { margin-bottom: 0; }
+    .tweaks label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-ink);
+      display: flex;
+      justify-content: space-between;
+    }
+    .tweaks label span.val {
+      color: var(--text-ink-2);
+      font-weight: 600;
+      font-family: "DM Mono", monospace;
+    }
+    .tweaks input[type=range] {
+      width: 100%;
+      accent-color: var(--color-brand);
+    }
+    .tweaks .state-preview {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 12px;
+      background: var(--bg-subtle);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .tweaks-toggle {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--text-ink);
+      color: var(--bg-base);
+      border: 0;
+      cursor: pointer;
+      font-size: 18px;
+      z-index: 99;
+      display: none;
+    }
+    .tweaks.hidden { display: none; }
+    .tweaks.hidden + .tweaks-toggle { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="chrome">
+    <div>
+      <h1>MoneyMind · 寵物頁設計探索</h1>
+      <div class="sub">3 個方向 · 右下面板可即時調 HP / 狀態</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-variant="v1">Living Card</button>
+      <button role="tab" data-variant="v2">Room Diorama</button>
+      <button role="tab" data-variant="v3">Tamagotchi HUD</button>
+    </div>
+    <button class="theme-toggle" id="themeToggle">☾ 深色</button>
+  </div>
+
+  <div class="stage">
+    <div class="phone">
+
+      <!-- ─────────── VARIANT 1: LIVING CARD ─────────── -->
+      <section class="variant v1 active" data-variant="v1">
+        <div class="v-header">
+          <button class="icon-btn" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="h-eyebrow">寵物</div>
+          <button class="icon-btn" aria-label="設定">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </button>
+        </div>
+
+        <div class="v1-cat-wrap">
+          <div class="v1-cat" data-cat>🐱</div>
+          <div class="v1-name">
+            <span data-name>貓貓</span>
+            <span class="edit-dot"></span>
+          </div>
+          <div class="v1-state">
+            <span data-state-label>活力滿滿</span>
+            <span style="margin: 0 6px; color: var(--text-ink-3)">·</span>
+            <span>養了 12 天</span>
+          </div>
+        </div>
+
+        <div class="v1-card">
+          <div class="v1-hp-row">
+            <div class="v1-hp-label">HP</div>
+            <div class="v1-hp-num"><span data-hp-num>80</span><span class="of"> / 100</span></div>
+          </div>
+          <div class="v1-hp-track">
+            <div class="v1-hp-fill"></div>
+            <div class="v1-hp-marker">🐾</div>
+          </div>
+          <div class="v1-hint" data-hint>繼續保持！</div>
+
+          <div class="v1-divider"></div>
+
+          <div class="v1-feeds">
+            <div class="v1-feed-row">
+              <div class="v1-feed-icon">📂</div>
+              <div class="v1-feed-text">
+                <div class="v1-feed-name">開啟 App</div>
+                <div class="v1-feed-sub">+3 HP · 每日 1 次</div>
+              </div>
+              <div class="v1-dots">
+                <span class="v1-dot done"></span>
+              </div>
+            </div>
+            <div class="v1-feed-row">
+              <div class="v1-feed-icon">📝</div>
+              <div class="v1-feed-text">
+                <div class="v1-feed-name">記一筆</div>
+                <div class="v1-feed-sub">+8 HP · 每日 3 次</div>
+              </div>
+              <div class="v1-dots">
+                <span class="v1-dot done"></span>
+                <span class="v1-dot done"></span>
+                <span class="v1-dot"></span>
+              </div>
+            </div>
+            <div class="v1-feed-row">
+              <div class="v1-feed-icon">👋</div>
+              <div class="v1-feed-text">
+                <div class="v1-feed-name">打招呼</div>
+                <div class="v1-feed-sub">+1 HP · 每日 1 次</div>
+              </div>
+              <div class="v1-dots">
+                <span class="v1-dot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="v1-cta">跟貓貓打招呼 +1 HP</button>
+        <div class="v1-footer">自 2026/5/13 起 · 沒互動每天 −8 HP</div>
+      </section>
+
+      <!-- ─────────── VARIANT 2: ROOM DIORAMA ─────────── -->
+      <section class="variant v2" data-variant="v2">
+        <div class="v-header">
+          <button class="icon-btn" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="h-eyebrow">寵物 · 家</div>
+          <div style="width: 36px"></div>
+        </div>
+
+        <div class="v2-room">
+          <div class="v2-window"></div>
+          <div class="v2-lamp"></div>
+          <div class="v2-frame">🎀</div>
+          <div class="v2-cat" data-cat-room>
+            <svg viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg">
+              <!-- Tail (behind everything) -->
+              <g class="rc-tail">
+                <path d="M 150 170 Q 190 138 180 82 Q 172 60 156 66"
+                      stroke="currentColor" stroke-width="16" stroke-linecap="round" fill="none"/>
+                <circle cx="156" cy="66" r="8" fill="var(--cat-pink)" opacity="0.5"/>
+              </g>
+
+              <!-- Back legs (drawn before body so body covers top half) -->
+              <g class="rc-leg leg-bl">
+                <rect x="56" y="172" width="14" height="52" rx="7" fill="currentColor"/>
+                <ellipse cx="63" cy="232" rx="11" ry="6" fill="currentColor"/>
+                <ellipse cx="63" cy="229" rx="3" ry="1.6" fill="var(--cat-pink)" opacity="0.75"/>
+              </g>
+              <g class="rc-leg leg-br">
+                <rect x="130" y="172" width="14" height="52" rx="7" fill="currentColor"/>
+                <ellipse cx="137" cy="232" rx="11" ry="6" fill="currentColor"/>
+                <ellipse cx="137" cy="229" rx="3" ry="1.6" fill="var(--cat-pink)" opacity="0.75"/>
+              </g>
+
+              <!-- Body & head (breathes) -->
+              <g class="rc-body">
+                <!-- Body shape (more upright than loaf) -->
+                <ellipse cx="100" cy="158" rx="50" ry="56" fill="currentColor"/>
+                <!-- Belly highlight -->
+                <ellipse cx="100" cy="180" rx="30" ry="36" fill="var(--cat-belly)"/>
+
+                <!-- Head -->
+                <ellipse cx="100" cy="86" rx="50" ry="44" fill="currentColor"/>
+
+                <!-- Ears (outer) -->
+                <path d="M 60 64 L 56 22 L 94 50 Z" fill="currentColor"/>
+                <path d="M 140 64 L 144 22 L 106 50 Z" fill="currentColor"/>
+                <!-- Ears (inner pink) -->
+                <path d="M 66 58 L 64 32 L 86 50 Z" fill="var(--cat-pink)"/>
+                <path d="M 134 58 L 136 32 L 114 50 Z" fill="var(--cat-pink)"/>
+
+                <!-- Whiskers -->
+                <g stroke="currentColor" stroke-width="1.2" opacity="0.45" stroke-linecap="round">
+                  <line x1="58" y1="100" x2="36" y2="96"/>
+                  <line x1="58" y1="108" x2="36" y2="110"/>
+                  <line x1="142" y1="100" x2="164" y2="96"/>
+                  <line x1="142" y1="108" x2="164" y2="110"/>
+                </g>
+
+                <!-- Eyes — multi-expression with white sclera background -->
+                <g class="rc-eyes" data-current="normal">
+                  <!-- Normal: sclera + iris + pupil + shine -->
+                  <g data-eye="normal">
+                    <ellipse cx="82" cy="88" rx="9" ry="11" fill="white"/>
+                    <ellipse cx="118" cy="88" rx="9" ry="11" fill="white"/>
+                    <g class="rc-blink">
+                      <ellipse cx="82" cy="88" rx="6.5" ry="9" fill="var(--cat-eye)"/>
+                      <ellipse cx="118" cy="88" rx="6.5" ry="9" fill="var(--cat-eye)"/>
+                      <ellipse cx="82" cy="88" rx="2.2" ry="7" fill="#0A0A0A"/>
+                      <ellipse cx="118" cy="88" rx="2.2" ry="7" fill="#0A0A0A"/>
+                      <circle cx="84" cy="84" r="1.5" fill="white"/>
+                      <circle cx="120" cy="84" r="1.5" fill="white"/>
+                    </g>
+                  </g>
+                  <!-- Smile (^_^): face-color block, then arcs in eye color -->
+                  <g data-eye="smile">
+                    <path d="M 72 92 Q 82 78 92 92" stroke="var(--text-ink)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                    <path d="M 108 92 Q 118 78 128 92" stroke="var(--text-ink)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                  </g>
+                  <!-- Heart eyes (greeted) -->
+                  <g data-eye="heart">
+                    <ellipse cx="82" cy="88" rx="10" ry="12" fill="white"/>
+                    <ellipse cx="118" cy="88" rx="10" ry="12" fill="white"/>
+                    <path class="rc-heart-eye" d="M 82 96 C 70 86, 70 78, 78 78 C 81 78, 82 81, 82 83 C 82 81, 83 78, 86 78 C 94 78, 94 86, 82 96 Z" fill="#E45565"/>
+                    <path class="rc-heart-eye" d="M 118 96 C 106 86, 106 78, 114 78 C 117 78, 118 81, 118 83 C 118 81, 119 78, 122 78 C 130 78, 130 86, 118 96 Z" fill="#E45565"/>
+                  </g>
+                  <!-- Cry: smaller sad eyes + brow + tears -->
+                  <g data-eye="cry">
+                    <ellipse cx="82" cy="91" rx="7" ry="7" fill="white"/>
+                    <ellipse cx="118" cy="91" rx="7" ry="7" fill="white"/>
+                    <ellipse cx="82" cy="92" rx="5" ry="5" fill="var(--cat-eye)"/>
+                    <ellipse cx="118" cy="92" rx="5" ry="5" fill="var(--cat-eye)"/>
+                    <ellipse cx="82" cy="93" rx="1.8" ry="4" fill="#0A0A0A"/>
+                    <ellipse cx="118" cy="93" rx="1.8" ry="4" fill="#0A0A0A"/>
+                    <path d="M 72 78 L 92 82" stroke="var(--text-ink)" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+                    <path d="M 128 78 L 108 82" stroke="var(--text-ink)" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+                    <ellipse class="rc-tear" cx="76" cy="104" rx="2.2" ry="3.2" fill="#7DBEFC"/>
+                    <ellipse class="rc-tear rc-tear-2" cx="124" cy="104" rx="2.2" ry="3.2" fill="#7DBEFC"/>
+                  </g>
+                  <!-- Closed (sleeping / sick): smiling-down arcs -->
+                  <g data-eye="closed">
+                    <path d="M 72 88 Q 82 94 92 88" stroke="var(--text-ink)" stroke-width="3" stroke-linecap="round" fill="none"/>
+                    <path d="M 108 88 Q 118 94 128 88" stroke="var(--text-ink)" stroke-width="3" stroke-linecap="round" fill="none"/>
+                  </g>
+                </g>
+
+                <!-- Nose -->
+                <path d="M 95 105 L 105 105 L 100 112 Z" fill="var(--cat-nose)"/>
+                <!-- Mouth (ω) -->
+                <path d="M 100 112 Q 94 120 89 114" stroke="var(--cat-mouth)" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <path d="M 100 112 Q 106 120 111 114" stroke="var(--cat-mouth)" stroke-width="2" stroke-linecap="round" fill="none"/>
+              </g>
+
+              <!-- Front legs (drawn after body so they sit in front) -->
+              <g class="rc-leg leg-fl">
+                <rect x="80" y="202" width="14" height="36" rx="7" fill="currentColor"/>
+                <ellipse cx="87" cy="244" rx="11" ry="5" fill="currentColor"/>
+                <ellipse cx="87" cy="242" rx="3" ry="1.6" fill="var(--cat-pink)" opacity="0.75"/>
+              </g>
+              <g class="rc-leg leg-fr">
+                <rect x="106" y="202" width="14" height="36" rx="7" fill="currentColor"/>
+                <ellipse cx="113" cy="244" rx="11" ry="5" fill="currentColor"/>
+                <ellipse cx="113" cy="242" rx="3" ry="1.6" fill="var(--cat-pink)" opacity="0.75"/>
+              </g>
+            </svg>
+          </div>
+          <div class="v2-bowl-label">飯碗 · <span data-hp-num>80</span></div>
+          <div class="v2-bowl"></div>
+          <div class="v2-doorway"></div>
+          <div class="v2-tray-label">餅乾托盤</div>
+          <div class="v2-tray" id="cookieTray"></div>
+        </div>
+
+        <div class="v2-card">
+          <div class="v2-name-row">
+            <div class="v2-name" data-name>貓貓</div>
+            <div class="v2-state-pill"><span data-state-label>活力滿滿</span> · 12 天</div>
+          </div>
+          <div class="v2-stats">
+            <div class="v2-stat full">
+              <div class="v2-stat-icon">📂</div>
+              <div class="v2-stat-val">1/1</div>
+              <div class="v2-stat-label">開啟</div>
+            </div>
+            <div class="v2-stat">
+              <div class="v2-stat-icon">📝</div>
+              <div class="v2-stat-val">2/3</div>
+              <div class="v2-stat-label">記帳</div>
+            </div>
+            <div class="v2-stat">
+              <div class="v2-stat-icon">👋</div>
+              <div class="v2-stat-val">0/1</div>
+              <div class="v2-stat-label">招呼</div>
+            </div>
+          </div>
+          <button class="v2-cta" id="greetBtn">跟貓貓玩 +1 HP</button>
+        </div>
+      </section>
+
+      <!-- ─────────── VARIANT 3: TAMAGOTCHI HUD ─────────── -->
+      <section class="variant v3" data-variant="v3">
+        <div class="v-header">
+          <button class="icon-btn" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="h-eyebrow">寵物機</div>
+          <div style="width: 36px"></div>
+        </div>
+
+        <div class="v3-device">
+          <div class="v3-bezel">
+            <div class="v3-screen-top">
+              <span>HP <span data-hp-num>80</span></span>
+              <span>DAY 012</span>
+            </div>
+            <div class="v3-screen">
+              <div class="v3-hearts" id="v3hearts"></div>
+              <div class="v3-cat-area" data-cat>🐱</div>
+              <div class="v3-status" data-name>貓貓</div>
+              <div class="v3-day" data-state-label>活力滿滿</div>
+            </div>
+            <div class="v3-controls">
+              <button class="v3-btn">A 餵食</button>
+              <button class="v3-btn">B 玩耍</button>
+              <button class="v3-btn">C 休息</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="v3-cta-bar">
+          <button class="v3-cta">記一筆 +8 HP</button>
+        </div>
+        <div class="v3-footer">沒互動每天 −8 HP · 12 天從滿血到躲起來</div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ─── Tweaks panel ─── -->
+  <div class="tweaks" id="tweaks">
+    <h2>
+      Tweaks
+      <button id="tweaksHide" style="border:0;background:transparent;font-size:14px;cursor:pointer;color:var(--text-ink-3)">×</button>
+    </h2>
+    <div class="row">
+      <label>HP <span class="val" id="hpVal">80</span></label>
+      <input type="range" min="0" max="100" value="80" id="hpSlider" />
+    </div>
+    <div class="row">
+      <div class="state-preview" id="statePreview">活力滿滿</div>
+    </div>
+    <div class="row">
+      <label>名字</label>
+      <input type="text" id="nameInput" value="貓貓" maxlength="12"
+        style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--hairline-2); background: var(--bg-subtle); color: var(--text-ink); font-family: inherit; font-size: 13px;" />
+    </div>
+    <div class="row">
+      <label>餅乾 <span class="val" id="cookieCount">2</span></label>
+      <button id="earnCookieBtn" style="padding: 8px 12px; border-radius: 8px; border: 0; background: var(--color-brand); color: white; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;">+ 模擬「記帳賺餅乾」</button>
+    </div>
+  </div>
+  <button class="tweaks-toggle" id="tweaksShow">⚙</button>
+
+  <script>
+    // ───── State derivation (mirrors src/cat/petState.ts) ────────
+    function derivePetState(hp) {
+      if (hp <= 0) return 'hiding';
+      if (hp < 20) return 'sick';
+      if (hp < 40) return 'hungry';
+      if (hp < 60) return 'ok';
+      if (hp < 80) return 'happy';
+      return 'thriving';
+    }
+    const STATE_LABEL = {
+      thriving: '活力滿滿',
+      happy:    '心情不錯',
+      ok:       '還行',
+      hungry:   '有點餓',
+      sick:     '不太舒服',
+      hiding:   '躲起來了',
+    };
+    const STATE_HINT = {
+      thriving: '繼續保持！',
+      happy:    '記一筆讓牠更開心',
+      ok:       '今天記了嗎？',
+      hungry:   '該餵食了',
+      sick:     '快回來看看牠',
+      hiding:   '記一筆讓牠回來',
+    };
+    const STATE_FILTER = {
+      thriving: 'none',
+      happy:    'none',
+      ok:       'none',
+      hungry:   'grayscale(0.3)',
+      sick:     'grayscale(0.6) opacity(0.75)',
+      hiding:   'grayscale(1) opacity(0.5)',
+    };
+    function hpColor(hp) {
+      if (hp >= 60) return 'var(--color-brand)';
+      if (hp >= 30) return '#F59E0B';
+      return 'var(--color-danger)';
+    }
+
+    // ───── Variant tabs ────────
+    document.querySelectorAll('.tabs button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.variant;
+        document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b === btn));
+        document.querySelectorAll('.variant').forEach((v) => v.classList.toggle('active', v.dataset.variant === id));
+        localStorage.setItem('pet-redesign-variant', id);
+      });
+    });
+    const savedVariant = localStorage.getItem('pet-redesign-variant');
+    if (savedVariant) {
+      document.querySelector(`.tabs button[data-variant="${savedVariant}"]`)?.click();
+    }
+
+    // ───── Theme toggle ────────
+    const themeBtn = document.getElementById('themeToggle');
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      themeBtn.textContent = theme === 'dark' ? '☀ 淺色' : '☾ 深色';
+      localStorage.setItem('pet-redesign-theme', theme);
+    }
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+    });
+    applyTheme(localStorage.getItem('pet-redesign-theme') || 'light');
+
+    // ───── HP / name tweak ────────
+    function renderHp(hp) {
+      const pct = Math.max(0, Math.min(100, hp));
+      const state = derivePetState(hp);
+      const label = STATE_LABEL[state];
+      const color = hpColor(hp);
+
+      document.documentElement.style.setProperty('--hp-pct', pct + '%');
+      document.documentElement.style.setProperty('--hp-color', color);
+      document.documentElement.style.setProperty('--cat-filter', STATE_FILTER[state]);
+
+      document.querySelectorAll('[data-hp-num]').forEach((el) => el.textContent = Math.round(pct));
+      document.querySelectorAll('[data-state-label]').forEach((el) => el.textContent = label);
+      const hint = document.querySelector('[data-hint]');
+      if (hint) hint.textContent = STATE_HINT[state];
+
+      // V3 hearts: 5 hearts, each represents 20 HP
+      const hearts = document.getElementById('v3hearts');
+      hearts.innerHTML = '';
+      const fullHearts = Math.ceil(pct / 20);
+      for (let i = 0; i < 5; i++) {
+        const h = document.createElement('div');
+        h.className = 'v3-heart' + (i < fullHearts ? '' : ' empty');
+        hearts.appendChild(h);
+      }
+
+      // Emoji cats (V1, V3)
+      document.querySelectorAll('[data-cat]').forEach((el) => {
+        if (state === 'hiding') {
+          el.textContent = '📦';
+        } else {
+          const variant = el.closest('.variant')?.dataset.variant;
+          if (variant === 'v1' || variant === 'v3') el.textContent = '🐱';
+        }
+      });
+
+      // V2 hand-drawn SVG cat: apply state class without clobbering .walking
+      const roomCat = document.querySelector('[data-cat-room]');
+      if (roomCat) {
+        ['thriving', 'happy', 'ok', 'hungry', 'sick', 'hiding'].forEach((s) => {
+          roomCat.classList.remove('rc-state-' + s);
+        });
+        roomCat.classList.add('rc-state-' + state);
+        roomCat.style.display = state === 'hiding' ? 'none' : '';
+      }
+      // Show box if hiding (insert/remove cardboard hint)
+      const room = document.querySelector('.v2-room');
+      if (room) {
+        let box = room.querySelector('.v2-empty-box');
+        if (state === 'hiding') {
+          if (!box) {
+            box = document.createElement('div');
+            box.className = 'v2-empty-box';
+            box.style.cssText = 'position:absolute;bottom:96px;left:50%;transform:translateX(-50%);font-size:96px;line-height:1;opacity:0.6;';
+            box.textContent = '📦';
+            room.appendChild(box);
+          }
+        } else if (box) {
+          box.remove();
+        }
+      }
+
+      document.getElementById('statePreview').textContent = label;
+      document.getElementById('statePreview').style.color = color;
+      document.getElementById('hpVal').textContent = pct;
+      localStorage.setItem('pet-redesign-hp', pct);
+
+      // Base eye expression follows state
+      setBaseEyes(state);
+    }
+
+    // ───── Eye expression manager ─────
+    function eyeForState(state) {
+      switch (state) {
+        case 'thriving': return 'smile';
+        case 'sick':     return 'closed';
+        case 'hungry':   return 'cry';
+        default:         return 'normal';
+      }
+    }
+    let eyeOverrideTimer = null;
+    function setBaseEyes(state) {
+      // only set base if no active override
+      if (eyeOverrideTimer) return;
+      const eyes = document.querySelector('.rc-eyes');
+      if (eyes) eyes.setAttribute('data-current', eyeForState(state));
+    }
+    function overrideEyes(expr, durationMs) {
+      const eyes = document.querySelector('.rc-eyes');
+      if (!eyes) return;
+      eyes.setAttribute('data-current', expr);
+      clearTimeout(eyeOverrideTimer);
+      eyeOverrideTimer = setTimeout(() => {
+        eyeOverrideTimer = null;
+        const hp = parseInt(hpSlider.value, 10);
+        setBaseEyes(derivePetState(hp));
+      }, durationMs);
+    }
+
+    const hpSlider = document.getElementById('hpSlider');
+    hpSlider.addEventListener('input', (e) => renderHp(parseInt(e.target.value, 10)));
+    const savedHp = parseInt(localStorage.getItem('pet-redesign-hp'), 10);
+    if (!Number.isNaN(savedHp)) { hpSlider.value = savedHp; }
+    renderHp(parseInt(hpSlider.value, 10));
+
+    const nameInput = document.getElementById('nameInput');
+    nameInput.addEventListener('input', (e) => {
+      const v = e.target.value.trim() || '貓貓';
+      document.querySelectorAll('[data-name]').forEach((el) => el.textContent = v);
+      localStorage.setItem('pet-redesign-name', v);
+    });
+    const savedName = localStorage.getItem('pet-redesign-name');
+    if (savedName) { nameInput.value = savedName; nameInput.dispatchEvent(new Event('input')); }
+
+    // ───── Tweaks show/hide ────────
+    document.getElementById('tweaksHide').addEventListener('click', () => {
+      document.getElementById('tweaks').classList.add('hidden');
+    });
+    document.getElementById('tweaksShow').addEventListener('click', () => {
+      document.getElementById('tweaks').classList.remove('hidden');
+    });
+
+    // ───── Cookie / greet interactions (Diorama variant) ────────
+    const MAX_COOKIES = 3;
+    let cookies = parseInt(localStorage.getItem('pet-redesign-cookies') || '2', 10);
+
+    function renderCookies() {
+      const tray = document.getElementById('cookieTray');
+      tray.innerHTML = '';
+      for (let i = 0; i < cookies; i++) {
+        const c = document.createElement('div');
+        c.className = 'cookie';
+        c.innerHTML = '<i></i>';
+        c.addEventListener('click', (e) => eatCookie(e.currentTarget));
+        tray.appendChild(c);
+      }
+      document.getElementById('cookieCount').textContent = cookies;
+      localStorage.setItem('pet-redesign-cookies', cookies);
+    }
+
+    function eatCookie(cookieEl) {
+      const catEl = document.querySelector('[data-cat-room]');
+      if (!catEl) return;
+      // Compute flight vector: from cookie to cat head
+      const cRect = cookieEl.getBoundingClientRect();
+      const catRect = catEl.getBoundingClientRect();
+      const dx = (catRect.left + catRect.width / 2) - (cRect.left + cRect.width / 2);
+      const dy = (catRect.top + catRect.height * 0.35) - (cRect.top + cRect.height / 2);
+
+      // Detach from tray, place at fixed coords, animate
+      const flyer = cookieEl.cloneNode(true);
+      flyer.classList.add('flying');
+      flyer.style.left = cRect.left + 'px';
+      flyer.style.top = cRect.top + 'px';
+      flyer.style.setProperty('--fly-dx', dx + 'px');
+      flyer.style.setProperty('--fly-dy', dy + 'px');
+      document.body.appendChild(flyer);
+      cookieEl.remove();
+      cookies = Math.max(0, cookies - 1);
+      document.getElementById('cookieCount').textContent = cookies;
+      localStorage.setItem('pet-redesign-cookies', cookies);
+
+      // Pause wandering for the duration of the chomp animation
+      pauseWander(1400);
+
+      // Trigger munch + smile eyes + HP gain after cookie reaches mouth
+      setTimeout(() => {
+        catEl.classList.add('eating');
+        overrideEyes('smile', 900);
+        spawnHpFloater(catRect, '+8 HP');
+        const newHp = Math.min(100, parseInt(hpSlider.value, 10) + 8);
+        hpSlider.value = newHp;
+        renderHp(newHp);
+        setTimeout(() => catEl.classList.remove('eating'), 600);
+      }, 480);
+      setTimeout(() => flyer.remove(), 700);
+    }
+
+    function spawnHpFloater(refRect, text) {
+      const room = document.querySelector('.v2-room');
+      if (!room) return;
+      const roomRect = room.getBoundingClientRect();
+      const f = document.createElement('div');
+      f.className = 'hp-floater';
+      f.textContent = text;
+      f.style.left = (refRect.left + refRect.width / 2 - roomRect.left) + 'px';
+      f.style.top = (refRect.top + refRect.height * 0.25 - roomRect.top) + 'px';
+      f.style.transform = 'translateX(-50%)';
+      room.appendChild(f);
+      setTimeout(() => f.remove(), 1300);
+    }
+
+    function spawnHearts(refRect, count = 4) {
+      const room = document.querySelector('.v2-room');
+      if (!room) return;
+      const roomRect = room.getBoundingClientRect();
+      for (let i = 0; i < count; i++) {
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.textContent = '♥';
+        const drift = (Math.random() - 0.5) * 60;
+        const dur = 900 + Math.random() * 600;
+        const rot = (Math.random() - 0.5) * 30;
+        h.style.left = (refRect.left + refRect.width / 2 + (Math.random() - 0.5) * 40 - roomRect.left) + 'px';
+        h.style.top = (refRect.top + 30 - roomRect.top) + 'px';
+        h.style.fontSize = (14 + Math.random() * 8) + 'px';
+        h.style.setProperty('--drift', drift + 'px');
+        h.style.setProperty('--rise-dur', dur + 'ms');
+        h.style.setProperty('--rot', rot + 'deg');
+        h.style.animationDelay = (i * 80) + 'ms';
+        room.appendChild(h);
+        setTimeout(() => h.remove(), dur + i * 80 + 100);
+      }
+    }
+
+    document.getElementById('greetBtn').addEventListener('click', () => {
+      const catEl = document.querySelector('[data-cat-room]');
+      if (!catEl) return;
+      const catRect = catEl.getBoundingClientRect();
+      pauseWander(1100);
+      catEl.classList.add('greeted');
+      overrideEyes('heart', 1600);
+      spawnHearts(catRect, 5);
+      const newHp = Math.min(100, parseInt(hpSlider.value, 10) + 1);
+      hpSlider.value = newHp;
+      renderHp(newHp);
+      setTimeout(() => catEl.classList.remove('greeted'), 700);
+    });
+
+    document.getElementById('earnCookieBtn').addEventListener('click', () => {
+      if (cookies >= MAX_COOKIES) return;
+      cookies += 1;
+      renderCookies();
+      // Quick flash effect on the tray
+      const tray = document.getElementById('cookieTray');
+      tray.animate(
+        [{ boxShadow: '0 2px 0 0 var(--room-shadow)' }, { boxShadow: '0 0 0 4px var(--color-brand-soft)' }, { boxShadow: '0 2px 0 0 var(--room-shadow)' }],
+        { duration: 500 },
+      );
+    });
+
+    renderCookies();
+
+    // ───── Wandering cat ─────
+    // Cat strolls between wander bounds, pauses, picks a new spot, flips direction.
+    // Stops while sick/hiding; slows when hungry.
+    const WANDER_MIN_X = 150;
+    const WANDER_MAX_X = 330;
+    let wanderPausedUntil = 0;
+    let wanderTimer = null;
+    let currentDir = 1;
+    let currentX = 240;
+
+    function pauseWander(ms) {
+      wanderPausedUntil = Math.max(wanderPausedUntil, Date.now() + ms);
+    }
+
+    function wanderStep() {
+      clearTimeout(wanderTimer);
+      const catEl = document.querySelector('[data-cat-room]');
+      if (!catEl) return;
+
+      const state = derivePetState(parseInt(hpSlider.value, 10));
+      // Don't move while sick or hiding
+      if (state === 'sick' || state === 'hiding') {
+        wanderTimer = setTimeout(wanderStep, 2500);
+        return;
+      }
+      // Respect external pause (eating, greeting)
+      const now = Date.now();
+      if (now < wanderPausedUntil) {
+        wanderTimer = setTimeout(wanderStep, wanderPausedUntil - now + 200);
+        return;
+      }
+
+      // Pick a new target sufficiently different from current
+      let targetX;
+      do {
+        targetX = WANDER_MIN_X + Math.random() * (WANDER_MAX_X - WANDER_MIN_X);
+      } while (Math.abs(targetX - currentX) < 70);
+
+      const dir = targetX > currentX ? 1 : -1;
+      const dist = Math.abs(targetX - currentX);
+      // Slower steps when hungry (low energy)
+      const speedFactor = state === 'hungry' ? 1.6 : state === 'ok' ? 1.15 : 1;
+      const duration = Math.max(1400, dist * 14 * speedFactor);
+
+      catEl.style.transition = `left ${duration}ms ease-in-out, transform 220ms ease, filter 400ms ease`;
+      // Flip first, then walk
+      currentDir = dir;
+      catEl.style.transform = `translateX(-50%) scaleX(${dir})`;
+      // Next frame: move
+      requestAnimationFrame(() => {
+        catEl.style.left = targetX + 'px';
+        catEl.classList.add('walking');
+      });
+      currentX = targetX;
+
+      // After arrival, stop bobbing and idle a bit
+      wanderTimer = setTimeout(() => {
+        catEl.classList.remove('walking');
+        const idleMs = 900 + Math.random() * 2200;
+        wanderTimer = setTimeout(wanderStep, idleMs);
+      }, duration);
+    }
+
+    // Kick off the wander loop
+    setTimeout(wanderStep, 800);
+  </script>
+</body>
+</html>
