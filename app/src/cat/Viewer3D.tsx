@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment } from '@react-three/drei';
-import { Box3, Mesh, MeshStandardMaterial, Vector3 } from 'three';
+import { Box3, Mesh, MeshStandardMaterial, MOUSE, Vector3 } from 'three';
 import { MODELS } from './models';
 
 // Target size for normalized models (max bbox dimension after scaling)
@@ -44,7 +44,7 @@ export function Viewer3D() {
           dampingFactor={0.08}
           // Touch: ONE finger = ROTATE only, TWO fingers = DOLLY (zoom only, no pan)
           touches={{ ONE: 0, TWO: 1 }}
-          mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: -1 }}
+          mouseButtons={{ LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: undefined }}
         />
       </Canvas>
 
