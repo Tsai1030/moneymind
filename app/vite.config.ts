@@ -13,6 +13,7 @@ export default defineConfig({
       workbox: {
         // Don't precache large GLB models — lazy fetch only
         globIgnores: ['**/*.glb'],
+        navigateFallbackDenylist: [/^\/google7fbe5506eeb9ae22\.html$/],
         runtimeCaching: [
           {
             urlPattern: /\.glb$/,
